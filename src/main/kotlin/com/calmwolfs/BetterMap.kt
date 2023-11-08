@@ -8,7 +8,9 @@ import com.calmwolfs.bettermap.config.RepoManager
 import com.calmwolfs.bettermap.config.UpdateManager
 import com.calmwolfs.bettermap.data.MinecraftData
 import com.calmwolfs.bettermap.data.ScoreboardData
+import com.calmwolfs.bettermap.data.connection.BetterMapServer
 import com.calmwolfs.bettermap.events.ModTickEvent
+import com.calmwolfs.bettermap.features.UsingBmCheck
 import com.calmwolfs.bettermap.utils.HypixelUtils
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +45,9 @@ class BetterMap {
         loadModule(PlayerData)
         loadModule(ScoreboardData)
         loadModule(UpdateManager)
+
+        loadModule(UsingBmCheck)
+        loadModule(BetterMapServer)
 
         Commands.init()
     }

@@ -2,6 +2,7 @@ package com.calmwolfs.bettermap.commands
 
 import com.calmwolfs.BetterMap
 import com.calmwolfs.bettermap.config.gui.ConfigGuiManager
+import com.calmwolfs.bettermap.features.UsingBmCheck
 import net.minecraft.command.ICommandSender
 import net.minecraft.util.BlockPos
 import net.minecraftforge.client.ClientCommandHandler
@@ -18,6 +19,9 @@ object Commands {
     fun init() {
         registerCommand("bm", openConfig)
         registerCommand("bettermap", openConfig)
+
+        registerCommand("bping") { UsingBmCheck.command(it) }
+        registerCommand("bmdebugpacket") { UsingBmCheck.debugPacket() }
 
         registerCommand("bmupdaterepo") { BetterMap.repo.updateRepo() }
         registerCommand("bmreloadrepo") { BetterMap.repo.reloadRepo() }
