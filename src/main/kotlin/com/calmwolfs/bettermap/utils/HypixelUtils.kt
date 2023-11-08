@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.utils
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.events.HypixelJoinEvent
 import net.minecraft.client.Minecraft
 import net.minecraftforge.fml.common.eventhandler.EventPriority
@@ -21,7 +21,7 @@ object HypixelUtils {
 
     @SubscribeEvent
     fun onHypixelJoin(event: HypixelJoinEvent) {
-        BetterMap.repo.displayRepoStatus(true)
+        BetterMapMod.repo.displayRepoStatus(true)
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

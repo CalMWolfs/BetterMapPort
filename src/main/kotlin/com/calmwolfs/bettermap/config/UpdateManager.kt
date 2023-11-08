@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.config
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.config.features.AboutConfig
 import com.calmwolfs.bettermap.config.update.ConfigVersionDisplay
 import com.calmwolfs.bettermap.config.update.GuiOptionEditorUpdateCheck
@@ -38,7 +38,7 @@ object UpdateManager {
 
     @SubscribeEvent
     fun onConfigLoad(event: ConfigLoadEvent) {
-        BetterMap.feature.about.updateStream.onToggle {
+        BetterMapMod.feature.about.updateStream.onToggle {
             reset()
         }
     }
@@ -52,7 +52,7 @@ object UpdateManager {
     }
 
     fun getCurrentVersion(): String {
-        return BetterMap.version
+        return BetterMapMod.version
     }
 
     fun injectConfigProcessor(processor: MoulConfigProcessor<*>) {
@@ -65,7 +65,7 @@ object UpdateManager {
         return getCurrentVersion().contains("pre", ignoreCase = true)
     }
 
-    private val config get() = BetterMap.feature.about
+    private val config get() = BetterMapMod.feature.about
 
     private fun reset() {
         updateState = UpdateState.NONE
@@ -121,8 +121,8 @@ object UpdateManager {
     private val context = UpdateContext(
         UpdateSource.githubUpdateSource("CalMWolfs", "BetterMapPort"),
         UpdateTarget.deleteAndSaveInTheSameFolder(UpdateManager::class.java),
-        CurrentVersion.ofTag(BetterMap.version),
-        BetterMap.MODID,
+        CurrentVersion.ofTag(BetterMapMod.version),
+        BetterMapMod.MODID,
     )
 
     init {

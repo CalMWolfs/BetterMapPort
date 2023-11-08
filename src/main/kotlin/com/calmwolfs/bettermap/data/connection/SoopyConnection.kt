@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.data.connection
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.google.gson.JsonObject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -29,7 +29,7 @@ object SoopyConnection {
     private var connectedFull = false
 
     init {
-        BetterMap.coroutineScope.launch {
+        BetterMapMod.coroutineScope.launch {
             connect()
 
             while (gameRunning) {
@@ -75,7 +75,7 @@ object SoopyConnection {
         output = socket?.getOutputStream()
         writer = output?.let { PrintWriter(it, true) }
 
-        BetterMap.coroutineScope.launch {
+        BetterMapMod.coroutineScope.launch {
             val input = socket?.getInputStream()
             val reader = BufferedReader(InputStreamReader(input))
             var shouldContinue = true
@@ -85,7 +85,7 @@ object SoopyConnection {
                     val data = reader.readLine()
                     if (data != null) {
                         try {
-                            val gson = BetterMap.configManager.gson
+                            val gson = BetterMapMod.configManager.gson
                             val asJson = gson.fromJson(data, JsonObject::class.java)
                             val packet = asJson.toSoopyPacket()
                             receiveData(packet)
@@ -140,7 +140,7 @@ object SoopyConnection {
 
             SoopyPacketType.DATA -> {
                 if (handlers.containsKey(packet.server)) {
-                    handlers[packet.server]?.receiveData(packet.data)
+                    handlers[packet.server]?.transmitData(packet.data)
                 }
             }
 

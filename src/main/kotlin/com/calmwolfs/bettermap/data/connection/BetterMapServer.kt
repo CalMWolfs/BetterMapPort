@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.data.connection
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.utils.JsonUtils.asBooleanOrFalse
 import com.calmwolfs.bettermap.utils.JsonUtils.getIntOrValue
@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
     private var lastDataSend = SimpleTimeMark.farPast()
 
-    private val gson get() = BetterMap.configManager.gson
+    private val gson get() = BetterMapMod.configManager.gson
 
     private val peopleUsingBMapCallback = ConcurrentHashMap<Int, (List<Boolean>) -> Unit>()
 

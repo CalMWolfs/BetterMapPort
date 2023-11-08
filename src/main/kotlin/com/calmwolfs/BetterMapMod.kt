@@ -29,13 +29,13 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
 @Mod(
-    modid = BetterMap.MODID,
+    modid = BetterMapMod.MODID,
     clientSideOnly = true,
     useMetadata = true,
     guiFactory = "com.calmwolfs.bettermap.config.gui.ConfigGuiForgeInterop",
     version = "1.0",
 )
-class BetterMap {
+class BetterMapMod {
     @Mod.EventHandler
     fun preInit(event: FMLPreInitializationEvent?) {
         loadModule(this)

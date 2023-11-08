@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.config.gui
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.config.ConfigManager
 import io.github.moulberry.moulconfig.gui.GuiScreenElementWrapper
 import io.github.moulberry.moulconfig.gui.MoulConfigEditor
@@ -11,6 +11,6 @@ object ConfigGuiManager {
         if (search != null) {
             editor.search(search)
         }
-        BetterMap.screenToOpen = GuiScreenElementWrapper(editor)
+        BetterMapMod.screenToOpen = GuiScreenElementWrapper(editor)
     }
 }

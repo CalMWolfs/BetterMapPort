@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.config
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.events.ConfigLoadEvent
 import com.calmwolfs.bettermap.events.HypixelJoinEvent
 import net.minecraft.client.Minecraft
@@ -12,7 +12,7 @@ object PlayerData {
     @SubscribeEvent
     fun onHypixelJoin(event: HypixelJoinEvent) {
         val playerUuid = Minecraft.getMinecraft().thePlayer.uniqueID
-        playerSpecific = BetterMap.feature.storage.players.getOrPut(playerUuid) { Storage.PlayerSpecific() }
+        playerSpecific = BetterMapMod.feature.storage.players.getOrPut(playerUuid) { Storage.PlayerSpecific() }
         ConfigLoadEvent().postAndCatch()
     }
 }

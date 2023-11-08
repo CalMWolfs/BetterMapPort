@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.utils
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.utils.StringUtils.unformat
 import net.minecraft.client.Minecraft
 import net.minecraft.event.ClickEvent
@@ -25,13 +25,13 @@ object ChatUtils {
     fun internalChat(message: String): Boolean {
         val minecraft = Minecraft.getMinecraft()
         if (minecraft == null) {
-            BetterMap.consoleLog(message.unformat())
+            BetterMapMod.consoleLog(message.unformat())
             return false
         }
 
         val thePlayer = minecraft.thePlayer
         if (thePlayer == null) {
-            BetterMap.consoleLog(message.unformat())
+            BetterMapMod.consoleLog(message.unformat())
             return false
         }
 

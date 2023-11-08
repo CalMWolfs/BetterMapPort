@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.config;
 
-import com.calmwolfs.BetterMap;
+import com.calmwolfs.BetterMapMod;
 import com.calmwolfs.bettermap.config.features.AboutConfig;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.moulconfig.Config;
@@ -10,12 +10,12 @@ public class Features extends Config {
 
     @Override
     public void saveNow() {
-        BetterMap.configManager.saveConfig("close-gui");
+        BetterMapMod.configManager.saveConfig("close-gui");
     }
 
     @Override
     public String getTitle() {
-        return "BetterMap " + BetterMap.getVersion() + " by §6CalMWolfs§r, §6Soopy§r, §6Tenios§r and §6Bloom§r, config by §5Moulberry §rand §5nea89";
+        return "BetterMap " + BetterMapMod.getVersion() + " by §6CalMWolfs§r, §6Soopy§r, §6Tenios§r and §6Bloom§r, config by §5Moulberry §rand §5nea89";
     }
 
     @Expose

@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.config
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.commands.CopyErrorCommand
 import com.calmwolfs.bettermap.utils.SimpleTimeMark
 import com.google.gson.GsonBuilder
@@ -81,8 +81,8 @@ object ConfigManager {
             }
         }
 
-        val features = BetterMap.feature
-        processor = MoulConfigProcessor(BetterMap.feature)
+        val features = BetterMapMod.feature
+        processor = MoulConfigProcessor(BetterMapMod.feature)
         BuiltinMoulConfigGuis.addProcessors(processor)
         UpdateManager.injectConfigProcessor(processor)
         ConfigProcessorDriver.processConfig(
@@ -101,7 +101,7 @@ object ConfigManager {
             val unit = file.parentFile.resolve("config.json.write")
             unit.createNewFile()
             BufferedWriter(OutputStreamWriter(FileOutputStream(unit), StandardCharsets.UTF_8)).use { writer ->
-                writer.write(gson.toJson(BetterMap.feature))
+                writer.write(gson.toJson(BetterMapMod.feature))
             }
 
             Files.move(

@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.utils
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.commands.CopyErrorCommand
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
@@ -26,7 +26,7 @@ object ClipboardUtils {
             deferred.complete(Toolkit.getDefaultToolkit().systemClipboard)
         } else {
             ModUtils.runDelayed(5.milliseconds) {
-                BetterMap.coroutineScope.launch {
+                BetterMapMod.coroutineScope.launch {
                     deferred.complete(getClipboard())
                 }
             }
@@ -35,7 +35,7 @@ object ClipboardUtils {
     }
 
     fun copyToClipboard(text: String, step: Int = 0) {
-        BetterMap.coroutineScope.launch {
+        BetterMapMod.coroutineScope.launch {
             try {
                 getClipboard()?.setContents(StringSelection(text), null)
             } catch (e: Exception) {

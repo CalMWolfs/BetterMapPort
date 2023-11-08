@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.commands
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.utils.ChatUtils
 import com.calmwolfs.bettermap.utils.ClipboardUtils
 import com.calmwolfs.bettermap.utils.KeyboardUtils
@@ -52,12 +52,12 @@ object CopyErrorCommand {
         val randomId = UUID.randomUUID().toString()
 
         val rawMessage = message.unformat()
-        errorMessages[randomId] = "```\nBetterMap ${BetterMap.version}: $rawMessage\n \n$stackTrace\n```"
+        errorMessages[randomId] = "```\nBetterMap ${BetterMapMod.version}: $rawMessage\n \n$stackTrace\n```"
         fullErrorMessages[randomId] =
-            "```\nBetterMap ${BetterMap.version}: $rawMessage\n(full stack trace)\n \n$fullStackTrace\n```"
+            "```\nBetterMap ${BetterMapMod.version}: $rawMessage\n(full stack trace)\n \n$fullStackTrace\n```"
 
         ChatUtils.clickableChat(
-            "§c[BetterMap ${BetterMap.version}]: $message§c. Click here to copy the error into the clipboard.",
+            "§c[BetterMap ${BetterMapMod.version}]: $message§c. Click here to copy the error into the clipboard.",
             "bmcopyerror $randomId"
         )
     }

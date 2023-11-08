@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.commands
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.config.gui.ConfigGuiManager
 import com.calmwolfs.bettermap.features.UsingBmCheck
 import net.minecraft.command.ICommandSender
@@ -23,9 +23,9 @@ object Commands {
         registerCommand("bping") { UsingBmCheck.command(it) }
         registerCommand("bmdebugpacket") { UsingBmCheck.debugPacket() }
 
-        registerCommand("bmupdaterepo") { BetterMap.repo.updateRepo() }
-        registerCommand("bmreloadrepo") { BetterMap.repo.reloadRepo() }
-        registerCommand("bmrepostatus") { BetterMap.repo.displayRepoStatus(false) }
+        registerCommand("bmupdaterepo") { BetterMapMod.repo.updateRepo() }
+        registerCommand("bmreloadrepo") { BetterMapMod.repo.reloadRepo() }
+        registerCommand("bmrepostatus") { BetterMapMod.repo.displayRepoStatus(false) }
     }
 
     private fun registerCommand(name: String, function: (Array<String>) -> Unit) {

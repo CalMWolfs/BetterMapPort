@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.data.connection
 
-import com.calmwolfs.BetterMap
+import com.calmwolfs.BetterMapMod
 import com.google.gson.JsonObject
 
 open class SoopyCommunicator(val serverType: SoopyPacketServer) {
@@ -12,7 +12,7 @@ open class SoopyCommunicator(val serverType: SoopyPacketServer) {
     }
 
     fun openConnection() {
-        val modVersion = "Forge-${BetterMap.version}"
+        val modVersion = "Forge-${BetterMapMod.version}"
         val jsonObject = JsonObject()
         jsonObject.addProperty("version", modVersion)
 
