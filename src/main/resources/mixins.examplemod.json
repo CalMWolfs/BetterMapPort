@@ -1,11 +1,10 @@
 {
-  "package": "${mixinGroup}",
-  "refmap": "mixins.${modid}.refmap.json",
+  "package": "com.calmwolfs.bettermap.mixins",
+  "refmap": "mixins.bettermap.refmap.json",
   "minVersion": "0.7",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
   ],
   "client": [
-	"MixinGuiMainMenu"
   ]
 }
