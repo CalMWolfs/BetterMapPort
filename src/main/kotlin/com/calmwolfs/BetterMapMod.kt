@@ -8,6 +8,7 @@ import com.calmwolfs.bettermap.config.PlayerData
 import com.calmwolfs.bettermap.config.RepoManager
 import com.calmwolfs.bettermap.config.UpdateManager
 import com.calmwolfs.bettermap.data.ChatManager
+import com.calmwolfs.bettermap.data.MinecraftConsoleFilter
 import com.calmwolfs.bettermap.data.MinecraftData
 import com.calmwolfs.bettermap.data.ScoreboardData
 import com.calmwolfs.bettermap.data.TablistData
@@ -72,6 +73,7 @@ class BetterMapMod {
     fun init(event: FMLInitializationEvent?) {
         configManager = ConfigManager
         configManager.firstLoad()
+        MinecraftConsoleFilter.initLogging()
         Runtime.getRuntime().addShutdownHook(Thread {
             configManager.saveConfig(ConfigFileType.FEATURES, "shutdown-hook")
         })
