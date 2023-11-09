@@ -1,9 +1,13 @@
 package com.calmwolfs.bettermap.config
 
 import com.calmwolfs.BetterMapMod
-import com.calmwolfs.bettermap.commands.CopyErrorCommand
-import com.calmwolfs.bettermap.utils.SimpleTimeMark
+import com.calmwolfs.bettermap.data.ModVector
+import com.calmwolfs.bettermap.data.roomdata.RoomDataFile
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
 import io.github.moulberry.moulconfig.observer.PropertyTypeAdapterFactory
 import io.github.moulberry.moulconfig.processor.BuiltinMoulConfigGuis
 import io.github.moulberry.moulconfig.processor.ConfigProcessorDriver
@@ -22,63 +26,48 @@ import java.nio.file.StandardCopyOption
 import kotlin.concurrent.fixedRateTimer
 
 object ConfigManager {
-    val gson = GsonBuilder().setPrettyPrinting()
+    val gson: Gson = GsonBuilder().setPrettyPrinting()
         .excludeFieldsWithoutExposeAnnotation()
         .serializeSpecialFloatingPointValues()
         .registerTypeAdapterFactory(PropertyTypeAdapterFactory())
+        .registerTypeAdapter(ModVector::class.java, object : TypeAdapter<ModVector>() {
+            override fun write(out: JsonWriter, value: ModVector) {
+                value.run { out.value("$x:$y:$z") }
+            }
+
+            override fun read(reader: JsonReader): ModVector {
+                val (x, y, z) = reader.nextString().split(":").map { it.toDouble() }
+                return ModVector(x, y, z)
+            }
+        }.nullSafe())
         .enableComplexMapKeySerialization()
         .create()
 
     lateinit var features: Features
+        private set
+    lateinit var roomData: RoomDataFile
+        private set
 
     var configDirectory = File("config/bettermap")
-    private var configFile: File? = null
     lateinit var processor: MoulConfigProcessor<Features>
 
+    private var configFile: File? = null
+    private var roomDataFile: File? = null
+
     fun firstLoad() {
-        if (ConfigManager::features.isInitialized) {
+        if (::features.isInitialized) {
             println("Loading config despite config being already loaded?")
         }
         configDirectory.mkdir()
 
         configFile = File(configDirectory, "config.json")
+        roomDataFile = File(configDirectory, "room_data.json")
 
-        println("Trying to load config from $configFile")
-
-        if (configFile!!.exists()) {
-            try {
-                println("load-config-now")
-                val inputStreamReader = InputStreamReader(FileInputStream(configFile!!), StandardCharsets.UTF_8)
-                val bufferedReader = BufferedReader(inputStreamReader)
-                features = gson.fromJson(bufferedReader.readText(), Features::class.java)
-
-                println("Loaded config from file")
-            } catch (error: Exception) {
-                error.printStackTrace()
-                val backupFile = configFile!!.resolveSibling("config-${SimpleTimeMark.now().toMillis()}-backup.json")
-                println("Exception while reading $configFile. Will load blank config and save backup to $backupFile")
-                println("Exception was $error")
-                try {
-                    configFile!!.copyTo(backupFile)
-                } catch (e: Exception) {
-                    println("Could not create backup for config file")
-                    e.printStackTrace()
-                }
-            }
-        }
-
-        if (!ConfigManager::features.isInitialized) {
-            println("Creating blank config and saving to file")
-            features = Features()
-            saveConfig("blank config")
-        }
+        features = firstLoadFile(configFile, ConfigFileType.FEATURES, Features())
+        roomData = firstLoadFile(roomDataFile, ConfigFileType.ROOM_DATA, RoomDataFile())
 
         fixedRateTimer(name = "bettermap-config-auto-save", period = 60_000L, initialDelay = 60_000L) {
-            try {
-                saveConfig("auto-save-60s")
-            } catch (error: Throwable) {
-                CopyErrorCommand.logError(error, "Error auto-saving config!")
-            }
+            saveConfig(ConfigFileType.FEATURES, "auto-save-60s")
         }
 
         val features = BetterMapMod.feature
@@ -92,18 +81,59 @@ object ConfigManager {
         )
     }
 
-    fun saveConfig(reason: String) {
+    private inline fun <reified T> firstLoadFile(file: File?, fileType: ConfigFileType, defaultValue: T): T {
+        val fileName = fileType.fileName
+        println("Trying to load $fileName from $file")
+        var output: T = defaultValue
+
+        if (file!!.exists()) {
+            try {
+                val inputStreamReader = InputStreamReader(FileInputStream(file), StandardCharsets.UTF_8)
+                val bufferedReader = BufferedReader(inputStreamReader)
+
+                println("load-$fileName-now")
+                output = gson.fromJson(bufferedReader.readText(), T::class.java)
+
+                println("Loaded $fileName from file")
+            } catch (error: Exception) {
+                error.printStackTrace()
+                val backupFile = file.resolveSibling("$fileName-${System.currentTimeMillis()}-backup.json")
+                println("Exception while reading $file. Will load blank $fileName and save backup to $backupFile")
+                println("Exception was $error")
+                try {
+                    file.copyTo(backupFile)
+                } catch (e: Exception) {
+                    println("Could not create backup for $fileName file")
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        if (output == defaultValue) {
+            println("Setting $fileName to be blank as it did not exist. It will be saved once something is written to it")
+        }
+
+        return output
+    }
+
+    fun saveConfig(fileType: ConfigFileType, reason: String) {
+        when (fileType) {
+            ConfigFileType.FEATURES -> saveFile(configFile, fileType.fileName, BetterMapMod.feature, reason)
+            ConfigFileType.ROOM_DATA -> saveFile(roomDataFile, fileType.fileName, BetterMapMod.roomData, reason)
+        }
+    }
+
+    private fun saveFile(file: File?, fileName: String, data: Any, reason: String) {
         println("saveConfig: $reason")
-        val file = configFile ?: throw Error("Can not save config, configFile is null!")
+        if (file == null) throw Error("Can not save $fileName, ${fileName}File is null!")
         try {
-            println("Saving config file")
+            println("Saving $fileName file")
             file.parentFile.mkdirs()
-            val unit = file.parentFile.resolve("config.json.write")
+            val unit = file.parentFile.resolve("$fileName.json.write")
             unit.createNewFile()
             BufferedWriter(OutputStreamWriter(FileOutputStream(unit), StandardCharsets.UTF_8)).use { writer ->
-                writer.write(gson.toJson(BetterMapMod.feature))
+                writer.write(gson.toJson(data))
             }
-
             Files.move(
                 unit.toPath(),
                 file.toPath(),
@@ -111,8 +141,13 @@ object ConfigManager {
                 StandardCopyOption.ATOMIC_MOVE
             )
         } catch (e: IOException) {
-            println("Could not save config file to $file")
+            println("Could not save $fileName file to $file")
             e.printStackTrace()
         }
     }
+}
+
+enum class ConfigFileType(val fileName: String) {
+    FEATURES("config"),
+    ROOM_DATA("room_data");
 }

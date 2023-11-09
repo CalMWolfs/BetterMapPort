@@ -48,6 +48,7 @@ object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
                 callback(booleanArray.map { it.asBooleanOrFalse() })
                 peopleUsingBMapCallback.remove(id)
             }
+            return
         }
     }
 

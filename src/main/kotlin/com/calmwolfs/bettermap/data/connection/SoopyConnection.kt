@@ -14,6 +14,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 object SoopyConnection {
+    private val gson get() = BetterMapMod.configManager.gson
     private var socket: Socket? = null
     private var connected = false
     private var reconDelay = 1000.0
@@ -85,7 +86,6 @@ object SoopyConnection {
                     val data = reader.readLine()
                     if (data != null) {
                         try {
-                            val gson = BetterMapMod.configManager.gson
                             val asJson = gson.fromJson(data, JsonObject::class.java)
                             val packet = asJson.toSoopyPacket()
                             receiveData(packet)

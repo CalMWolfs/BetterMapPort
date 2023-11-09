@@ -1,6 +1,7 @@
 package com.calmwolfs
 
 import com.calmwolfs.bettermap.commands.Commands
+import com.calmwolfs.bettermap.config.ConfigFileType
 import com.calmwolfs.bettermap.config.ConfigManager
 import com.calmwolfs.bettermap.config.Features
 import com.calmwolfs.bettermap.config.PlayerData
@@ -9,6 +10,8 @@ import com.calmwolfs.bettermap.config.UpdateManager
 import com.calmwolfs.bettermap.data.MinecraftData
 import com.calmwolfs.bettermap.data.ScoreboardData
 import com.calmwolfs.bettermap.data.connection.BetterMapServer
+import com.calmwolfs.bettermap.data.roomdata.RoomDataFile
+import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.features.UsingBmCheck
 import com.calmwolfs.bettermap.utils.HypixelUtils
@@ -48,6 +51,7 @@ class BetterMapMod {
 
         loadModule(UsingBmCheck)
         loadModule(BetterMapServer)
+        loadModule(RoomDataManager)
 
         Commands.init()
     }
@@ -57,7 +61,7 @@ class BetterMapMod {
         configManager = ConfigManager
         configManager.firstLoad()
         Runtime.getRuntime().addShutdownHook(Thread {
-            configManager.saveConfig("shutdown-hook")
+            configManager.saveConfig(ConfigFileType.FEATURES, "shutdown-hook")
         })
         repo = RepoManager(configManager.configDirectory)
         try {
@@ -88,6 +92,7 @@ class BetterMapMod {
 
         @JvmStatic
         val feature: Features get() = configManager.features
+        val roomData: RoomDataFile get() = configManager.roomData
 
         lateinit var repo: RepoManager
         lateinit var configManager: ConfigManager

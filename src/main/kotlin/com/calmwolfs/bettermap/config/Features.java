@@ -10,7 +10,7 @@ public class Features extends Config {
 
     @Override
     public void saveNow() {
-        BetterMapMod.configManager.saveConfig("close-gui");
+        BetterMapMod.configManager.saveConfig(ConfigFileType.FEATURES, "close-gui");
     }
 
     @Override
