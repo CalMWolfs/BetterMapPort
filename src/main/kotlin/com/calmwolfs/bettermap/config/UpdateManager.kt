@@ -1,12 +1,10 @@
 package com.calmwolfs.bettermap.config
 
 import com.calmwolfs.BetterMapMod
-import com.calmwolfs.bettermap.config.features.AboutConfig
 import com.calmwolfs.bettermap.config.update.ConfigVersionDisplay
 import com.calmwolfs.bettermap.config.update.GuiOptionEditorUpdateCheck
 import com.calmwolfs.bettermap.events.ConfigLoadEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
-import com.calmwolfs.bettermap.utils.ChatUtils
 import com.calmwolfs.bettermap.utils.MinecraftExecutor
 import com.calmwolfs.bettermap.utils.ModUtils.onToggle
 import io.github.moulberry.moulconfig.processor.MoulConfigProcessor
@@ -74,33 +72,34 @@ object UpdateManager {
         println("Reset update state")
     }
 
+    //todo reenable when needed, commenting to prevent a rare crash on launch
     fun checkUpdate() {
-        if (updateState != UpdateState.NONE) {
-            println("Trying to perform update check while another update is already in progress")
-            return
-        }
-        println("Starting update check")
-        var updateStream = config.updateStream.get()
-        if (updateStream == AboutConfig.UpdateStream.RELEASES && isPreRelease()) {
-            updateStream = AboutConfig.UpdateStream.PRE
-        }
-        activePromise = context.checkUpdate(updateStream.stream)
-            .thenAcceptAsync({
-                println("Update check completed")
-                if (updateState != UpdateState.NONE) {
-                    println("This appears to be the second update check. Ignoring this one")
-                    return@thenAcceptAsync
-                }
-                potentialUpdate = it
-                if (it.isUpdateAvailable) {
-                    updateState = UpdateState.AVAILABLE
-                    ChatUtils.clickableChat(
-                        "§e[BetterMap] §afound a new update: ${getNextVersion()} " +
-                                "§aGo check §b/bm download §afor more info.",
-                        "bm download"
-                    )
-                }
-            }, MinecraftExecutor.OnThread)
+//        if (updateState != UpdateState.NONE) {
+//            println("Trying to perform update check while another update is already in progress")
+//            return
+//        }
+//        println("Starting update check")
+//        var updateStream = config.updateStream.get()
+//        if (updateStream == AboutConfig.UpdateStream.RELEASES && isPreRelease()) {
+//            updateStream = AboutConfig.UpdateStream.PRE
+//        }
+//        activePromise = context.checkUpdate(updateStream.stream)
+//            .thenAcceptAsync({
+//                println("Update check completed")
+//                if (updateState != UpdateState.NONE) {
+//                    println("This appears to be the second update check. Ignoring this one")
+//                    return@thenAcceptAsync
+//                }
+//                potentialUpdate = it
+//                if (it.isUpdateAvailable) {
+//                    updateState = UpdateState.AVAILABLE
+//                    ChatUtils.clickableChat(
+//                        "§e[BetterMap] §afound a new update: ${getNextVersion()} " +
+//                                "§aGo check §b/bm download §afor more info.",
+//                        "bm download"
+//                    )
+//                }
+//            }, MinecraftExecutor.OnThread)
     }
 
     fun queueUpdate() {

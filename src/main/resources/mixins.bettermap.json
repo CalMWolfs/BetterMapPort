@@ -1,9 +1,10 @@
 {
-  "package": "com.calmwolfs.bettermap.mixins",
+  "package": "com.calmwolfs.bettermap.mixins.transformers",
   "refmap": "mixins.bettermap.refmap.json",
   "minVersion": "0.7",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "AccessorGuiPlayerTabOverlay"
   ],
   "client": [
   ]

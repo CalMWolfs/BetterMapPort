@@ -21,7 +21,7 @@ object RoomDataManager {
     private val tempProcessedRoomData = mutableListOf<RoomData>()
     private var lastLoad = SimpleTimeMark.farPast()
 
-    val loadedRooms = mutableMapOf<String, RoomData>()
+    private val loadedRooms = mutableMapOf<String, RoomData>()
 
     @SubscribeEvent
     fun onConfigLoad(event: ConfigLoadEvent) {
@@ -46,8 +46,6 @@ object RoomDataManager {
                 }
 
                 storage.roomData = tempProcessedRoomData
-                tempProcessedRoomData.clear()
-                tempRoomData.clear()
                 BetterMapMod.configManager.saveConfig(ConfigFileType.ROOM_DATA, "Update room data")
             } catch (e: Exception) {
                 CopyErrorCommand.logError(e, "Error while fetching and processing api room data!")
@@ -56,7 +54,7 @@ object RoomDataManager {
                 }
             }
             if (storage.roomData == null || storage.roomData.isEmpty()) {
-                ModUtils.warning("No saved room data, a lot of features won't work!")
+                ModUtils.warning("No saved room data, some features won't work!")
             }
 
             loadedRooms.clear()

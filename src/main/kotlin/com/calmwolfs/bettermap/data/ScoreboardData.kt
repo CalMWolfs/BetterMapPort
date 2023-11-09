@@ -9,8 +9,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object ScoreboardData {
     private var scoreboard = listOf<String>()
+    private var objective = ""
 
     fun getScoreboard() = scoreboard.reversed()
+    fun getObjective() = objective
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onTick(event: ModTickEvent) {
@@ -19,13 +21,14 @@ object ScoreboardData {
 
         if (list != scoreboard) {
             scoreboard = list
-            ScoreboardUpdateEvent(scoreboard.reversed()).postAndCatch()
+            ScoreboardUpdateEvent(scoreboard.reversed(), objective).postAndCatch()
         }
     }
 
     private fun fetchScoreboardLines(): List<String> {
         val scoreboard = Minecraft.getMinecraft().theWorld?.scoreboard ?: return emptyList()
         val objective = scoreboard.getObjectiveInDisplaySlot(1) ?: return emptyList()
+        this.objective = objective.displayName
         val scores = scoreboard.getSortedScores(objective)
 
         return scores.map {
