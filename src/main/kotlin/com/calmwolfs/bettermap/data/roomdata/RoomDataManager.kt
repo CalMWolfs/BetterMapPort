@@ -68,4 +68,9 @@ object RoomDataManager {
             if (isCommand) ChatUtils.chat("§6[BetterMap] §7Refreshed rooms from the api")
         }
     }
+
+    fun getRoomData(roomId: String?): RoomData? {
+        if (roomId == null) return null
+        return loadedRooms[roomId]
+    }
 }

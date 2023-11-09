@@ -1,5 +1,7 @@
 package com.calmwolfs.bettermap.utils
 
+import com.calmwolfs.bettermap.data.roomdata.RoomData
+import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.DungeonStartEvent
 import com.calmwolfs.bettermap.events.EnterBossFightEvent
 import com.calmwolfs.bettermap.events.ModChatEvent
@@ -10,36 +12,58 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object DungeonUtils {
     private val floorPattern = " §7⏣? §cThe Catacombs §7\\((?<floor>\\w+)\\)".toPattern()
+    private val roomIdPattern = "\\d+/\\d+/\\d+ \\w+ (?<roomId>\\S+)".toPattern()
 
-    var dungeonFloor: String? = null
-    var started = false
-    var inBossRoom = false
+    private var dungeonFloor: String? = null
+    private var started = false
+    private var boss = false
 
-    fun inDungeon() = dungeonFloor != null
+    private var currentRoomId: String? = null
+    var currentRoomData: RoomData? = null
+
+    //todo in mastermode variable
+
+    fun inDungeon() = started
+    fun inBossRoom() = boss
+    fun getDungeonFloor() = dungeonFloor
 
     @SubscribeEvent
     fun onScoreboardUpdate(event: ScoreboardUpdateEvent) {
-        if (dungeonFloor == null) {
+        if (getDungeonFloor() == null) {
             for (line in event.scoreboard) {
+                if (getDungeonFloor() != null) continue
                 floorPattern.matchMatcher(line) {
                     val floor = group("floor")
                     dungeonFloor = floor
                 }
             }
         }
+
+        var foundId: String? = null
+        if (inDungeon() && !inBossRoom()) {
+            if (event.scoreboard.isNotEmpty()) {
+                roomIdPattern.matchMatcher(event.scoreboard[0].unformat()) {
+                    foundId = group("roomId")
+                }
+            }
+        }
+        if (foundId != currentRoomId) {
+            currentRoomData = RoomDataManager.getRoomData(foundId)
+            currentRoomId = foundId
+        }
     }
 
     @SubscribeEvent
     fun onChatMessage(event: ModChatEvent) {
-        val floor = dungeonFloor ?: return
+        val floor = getDungeonFloor() ?: return
         if (event.message == "§e[NPC] §bMort§f: Here, I found this map when I first entered the dungeon.") {
             started = true
             DungeonStartEvent(floor).postAndCatch()
         }
 
-        if (!inBossRoom) {
+        if (!inBossRoom()) {
             if (event.message.unformat() in bossEntryMessages) {
-                inBossRoom = true
+                boss = true
                 EnterBossFightEvent(floor).postAndCatch()
             }
         }
@@ -49,7 +73,8 @@ object DungeonUtils {
     fun onWorldChange(event: WorldChangeEvent) {
         dungeonFloor = null
         started = false
-        inBossRoom = false
+        boss = false
+        currentRoomId = null
     }
 
     private val bossEntryMessages = listOf(
