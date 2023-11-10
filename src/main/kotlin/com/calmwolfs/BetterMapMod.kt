@@ -19,6 +19,8 @@ import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.features.UsingBmCheck
 import com.calmwolfs.bettermap.utils.DungeonUtils
 import com.calmwolfs.bettermap.utils.HypixelUtils
+import com.calmwolfs.bettermap.utils.InventoryUtils
+import com.calmwolfs.bettermap.utils.MapUtils
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -54,6 +56,8 @@ class BetterMapMod {
         //utils
         loadModule(DungeonUtils)
         loadModule(HypixelUtils)
+        loadModule(InventoryUtils)
+        loadModule(MapUtils)
 
         //data
         loadModule(BetterMapServer)

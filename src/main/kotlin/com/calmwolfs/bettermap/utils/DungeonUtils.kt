@@ -24,6 +24,7 @@ object DungeonUtils {
     //todo in mastermode variable
 
     fun inDungeon() = started
+    fun inDungeonRun() = started && !boss
     fun inBossRoom() = boss
     fun getDungeonFloor() = dungeonFloor
 
