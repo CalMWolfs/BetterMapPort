@@ -70,7 +70,7 @@ enum class RoomShape(val apiName: String) {
 
     companion object {
         fun fromApiName(apiName: String): RoomShape {
-            return RoomShape.entries.find { it.apiName == apiName } ?: RoomShape.UNKNOWN
+            return RoomShape.entries.find { it.apiName == apiName } ?: UNKNOWN
         }
     }
 }
@@ -89,7 +89,7 @@ enum class RoomDataType(val apiName: String) {
 
     companion object {
         fun fromApiName(apiName: String): RoomDataType {
-            return entries.find { it.apiName == apiName } ?: RoomDataType.UNKNOWN
+            return entries.find { it.apiName == apiName } ?: UNKNOWN
         }
     }
 }
