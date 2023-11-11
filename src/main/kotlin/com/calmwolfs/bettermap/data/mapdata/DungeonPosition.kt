@@ -2,35 +2,28 @@ package com.calmwolfs.bettermap.data.mapdata
 
 import com.calmwolfs.bettermap.data.ModVector
 import com.calmwolfs.bettermap.utils.MapUtils
-import kotlin.math.roundToInt
 
 data class DungeonPosition(val position: ModVector) {
     val mapPos: Pair<Int, Int>
-        get() = mapPosFromWorld(position)
+        get() = MapUtils.mapPosFromGridPos(asGridPos(position))
 
-    val arrayPos: Pair<Int, Int>
-        get() = arrayPosFromWorld(position)
+    val mapGrid: Pair<Int, Int>
+        get() = asGridPos(position)
 
-    companion object {
-        fun mapPosFromWorld(position: ModVector): Pair<Int, Int> {
-            return Pair(
-                ((position.x - DungeonData.START_X + DungeonData.ROOM_SIZE) * MapUtils.scaleFactor + MapUtils.spawnPosition.first).roundToInt(),
-                ((position.y - DungeonData.START_Y + DungeonData.ROOM_SIZE) * MapUtils.scaleFactor + MapUtils.spawnPosition.second).roundToInt()
-            )
-        }
+    val posInGrid: Pair<Int, Int>
+        get() = asPosInGrid(position)
 
-        fun arrayPosFromWorld(position: ModVector): Pair<Int, Int> {
-            return Pair(
-                ((position.x - DungeonData.START_X) / DungeonData.ROOM_SIZE).toInt(),
-                ((position.x - DungeonData.START_Y) / DungeonData.ROOM_SIZE).toInt()
-            )
-        }
+    private fun asGridPos(position: ModVector): Pair<Int, Int> {
+        return Pair(
+            (position.x.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE,
+            (position.y.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE
+        )
+    }
 
-        fun arrayPosFromMap(x: Int, y: Int): Pair<Int, Int> {
-            return Pair(
-                (x - MapUtils.spawnPosition.first) / MapUtils.mapTileSize,
-                (y - MapUtils.spawnPosition.second) / MapUtils.mapTileSize
-            )
-        }
+    private fun asPosInGrid(position: ModVector): Pair<Int, Int> {
+        return Pair(
+            (position.x.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE,
+            (position.y.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE
+        )
     }
 }

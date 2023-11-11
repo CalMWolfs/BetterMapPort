@@ -5,4 +5,6 @@ object DungeonData {
 
     const val START_X = -200
     const val START_Y = -200
+
+    const val ROOM_OFFSET = 200
 }
