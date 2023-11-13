@@ -1,29 +1,32 @@
 package com.calmwolfs.bettermap.data.mapdata
 
+import com.calmwolfs.bettermap.data.ModPair
 import com.calmwolfs.bettermap.data.ModVector
-import com.calmwolfs.bettermap.utils.MapUtils
+import com.calmwolfs.bettermap.data.mapdata.DungeonData.ROOM_OFFSET
+import com.calmwolfs.bettermap.data.mapdata.DungeonData.ROOM_SIZE
 
 data class DungeonPosition(val position: ModVector) {
-    val mapPos: Pair<Int, Int>
-        get() = MapUtils.mapPosFromGridPos(asGridPos(position))
+    // this gets the corner not the actual pos
+//    val mapPos: Pair<Int, Int>
+//        get() = MapUtils.mapPosFromGridPos(asGridPos(position))
 
-    val mapGrid: Pair<Int, Int>
+    val mapGrid: ModPair
         get() = asGridPos(position)
 
-    val posInGrid: Pair<Int, Int>
+    val posInGrid: ModPair
         get() = asPosInGrid(position)
 
-    private fun asGridPos(position: ModVector): Pair<Int, Int> {
-        return Pair(
-            (position.x.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE,
-            (position.y.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE
+    private fun asGridPos(position: ModVector): ModPair {
+        return ModPair(
+            (position.x.toInt() + ROOM_OFFSET) / ROOM_SIZE,
+            (position.y.toInt() + ROOM_OFFSET) / ROOM_SIZE
         )
     }
 
-    private fun asPosInGrid(position: ModVector): Pair<Int, Int> {
-        return Pair(
-            (position.x.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE,
-            (position.y.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE
+    private fun asPosInGrid(position: ModVector): ModPair {
+        return ModPair(
+            (position.x.toInt() + ROOM_OFFSET) % ROOM_SIZE,
+            (position.y.toInt() + ROOM_OFFSET) % ROOM_SIZE
         )
     }
 }
