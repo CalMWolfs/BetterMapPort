@@ -26,3 +26,18 @@ enum class RoomType(val roomColour: Int) {
         }
     }
 }
+
+enum class DungeonClass(val displayName: String) {
+    HEALER("Healer"),
+    MAGE("Mage"),
+    TANK("Tank"),
+    BERSERK("Berserk"),
+    ARCHER("Archer"),
+    UNKNOWN("EMPTY");
+
+    companion object {
+        fun fromTabWord(word: String): DungeonClass {
+            return DungeonClass.entries.find { it.displayName == word } ?: UNKNOWN
+        }
+    }
+}

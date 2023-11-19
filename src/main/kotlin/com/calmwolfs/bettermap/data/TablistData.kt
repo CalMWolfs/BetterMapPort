@@ -4,9 +4,7 @@ import com.calmwolfs.bettermap.events.FooterUpdateEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.events.TablistUpdateEvent
 import com.calmwolfs.bettermap.mixins.transformers.AccessorGuiPlayerTabOverlay
-import com.calmwolfs.bettermap.utils.StringUtils.findMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.stripResets
-import com.calmwolfs.bettermap.utils.StringUtils.unformat
 import com.google.common.collect.ComparisonChain
 import com.google.common.collect.Ordering
 import net.minecraft.client.Minecraft
@@ -19,18 +17,16 @@ import net.minecraftforge.fml.relauncher.SideOnly
 
 object TablistData {
     private var tablist = listOf<String>()
-    private var lobbyPlayers = listOf<String>()
     private var header = ""
     private var footer = ""
+    private var playerInfo = listOf<NetworkPlayerInfo>()
 
     private var tablistObjective = ""
-
-    private val tabUsernamePattern = "^(?:\\[\\w.+] )?(?:.\\s)?(?<username>\\w+)".toPattern()
 
     private val playerOrdering = Ordering.from(PlayerComparator())
 
     fun getTablist() = tablist
-    fun getPlayers() = lobbyPlayers
+    fun getPlayerInfo() = playerInfo
     fun getHeader() = header
     fun getFooter() = footer
 
@@ -56,38 +52,10 @@ object TablistData {
             footer = footerData
         }
 
-        val scoreboard = Minecraft.getMinecraft().theWorld?.scoreboard ?: return
-        val objective = scoreboard.getObjectiveInDisplaySlot(0)
-        if (objective != null) {
-            tablistObjective = objective.displayName
-
-            val scoreboardData = objective.scoreboard
-            val playerScores = mutableMapOf<String, Int>()
-
-            for (score in scoreboardData.scores) {
-                val playerName = score.playerName
-
-                if (playerName !in lobbyPlayers) continue
-
-                val scoreValue = score.scorePoints
-                playerScores[playerName] = scoreValue
-            }
-        }
-
         if (result == tablist) return
 
         tablist = result
-
-        val playersResult = mutableListOf<String>()
-        for (line in tablist) {
-            if (line.startsWith("§8[NPC]")) continue
-            tabUsernamePattern.findMatcher(line.unformat()) {
-                playersResult.add(group("username"))
-            }
-        }
-
-        lobbyPlayers = playersResult
-
+        playerInfo = players
         TablistUpdateEvent(tablist).postAndCatch()
     }
 

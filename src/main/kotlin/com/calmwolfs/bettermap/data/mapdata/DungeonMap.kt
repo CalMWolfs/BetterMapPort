@@ -7,5 +7,6 @@ object DungeonMap {
     val uniqueRooms = mutableListOf<DungeonRoom>()
     val dungeonDoors = mutableListOf<DungeonDoor>()
     val witherDoors = mutableListOf<DungeonDoor>()
+    val foundRoomIds = mutableListOf<String>()
 
 }

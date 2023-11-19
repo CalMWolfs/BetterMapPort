@@ -1,6 +1,7 @@
 package com.calmwolfs.bettermap.utils
 
 import com.calmwolfs.bettermap.data.ModPair
+import com.calmwolfs.bettermap.data.asGridPos
 import com.calmwolfs.bettermap.data.mapdata.DungeonData
 import com.calmwolfs.bettermap.data.mapdata.DungeonData.DOOR_SIZE
 import com.calmwolfs.bettermap.data.mapdata.DungeonDoor
@@ -9,9 +10,14 @@ import com.calmwolfs.bettermap.data.mapdata.DungeonRoom
 import com.calmwolfs.bettermap.data.mapdata.MapColourArray
 import com.calmwolfs.bettermap.data.mapdata.RoomState
 import com.calmwolfs.bettermap.data.mapdata.RoomType
+import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.MapUpdateEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
+import com.calmwolfs.bettermap.events.RoomChangeEvent
+import com.calmwolfs.bettermap.events.TablistUpdateEvent
 import com.calmwolfs.bettermap.events.WorldChangeEvent
+import com.calmwolfs.bettermap.utils.StringUtils.matchMatcher
+import com.calmwolfs.bettermap.utils.StringUtils.unformat
 import net.minecraft.client.Minecraft
 import net.minecraft.item.ItemMap
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -26,11 +32,16 @@ object MapUtils {
     private var tileSize = 0
     private var mapCalibrated = false
 
+    private var identifiedPuzzleCount = 0
+
     var scaleFactor = 0.0
     private var bloodOpen = false
 
     fun isMapCalibrated() = mapCalibrated
     fun bloodOpened() = bloodOpen
+
+    private val puzzleCountPattern = "Puzzles: \\((?<puzzles>\\d)\\)".toPattern()
+    private val puzzleInfoPattern = "\\s(?<name>.*): \\[(?<status>.)]".toPattern()
 
     val mapTileSize: Int
         get() = tileSize + DOOR_SIZE * 2
@@ -62,6 +73,21 @@ object MapUtils {
     }
 
     @SubscribeEvent
+    fun onRoomChange(event: RoomChangeEvent) {
+        val newId = event.newRoomId ?: return
+        if (DungeonMap.foundRoomIds.contains(newId)) return
+
+        val playerLocation = LocationUtils.playerLocation()
+        val currentRoom = getRoom(playerLocation.asGridPos()) ?: return
+        if (currentRoom.roomId != null || currentRoom.type == RoomType.UNKNOWN) return
+
+        currentRoom.roomId = newId
+        DungeonMap.foundRoomIds.add(newId)
+
+        //todo socket update
+    }
+
+    @SubscribeEvent
     fun onMapUpdate(event: MapUpdateEvent) {
         if (!mapCalibrated) {
             findEntranceCorner()
@@ -82,11 +108,14 @@ object MapUtils {
         DungeonMap.uniqueRooms.clear()
         DungeonMap.dungeonDoors.clear()
         DungeonMap.witherDoors.clear()
+        DungeonMap.foundRoomIds.clear()
         savedMap = MapColourArray.empty()
 
         spawnTilePosition = ModPair(-1, -1)
         topLeftTilePos = ModPair(-1, -1)
         mapTileCount = ModPair(-1, -1)
+
+        identifiedPuzzleCount = 0
 
         tileSize = 0
         bloodOpen = false
@@ -147,8 +176,8 @@ object MapUtils {
     }
 
     private fun getDungeonRooms() {
-        for (y in 0 until mapTileCount.first) {
-            for (x in 0 until mapTileCount.second) {
+        for (y in 0 until mapTileCount.second) {
+            for (x in 0 until mapTileCount.first) {
                 val location = mapPosFromGridPos(ModPair(x, y), ModPair(DOOR_SIZE, DOOR_SIZE))
 
                 when (val roomType = getRoomType(location)) {
@@ -186,18 +215,18 @@ object MapUtils {
     private fun processNormalRoom(position: ModPair) {
         val currentRoom = getRoom(position)
 
-        val leftRoom = if (getRoomType(mapPosFromGridPos(position, ModPair(DOOR_SIZE - 1, DOOR_SIZE))) == RoomType.NORMAL) {
+        val leftRoom = if (getRoomType(mapPosFromGridPos(position, ModPair(0, DOOR_SIZE))) == RoomType.NORMAL) {
             getRoom(ModPair(position.first - 1, position.second))
         } else null
-        val topRoom = if (getRoomType(mapPosFromGridPos(position, ModPair(DOOR_SIZE, DOOR_SIZE - 1))) == RoomType.NORMAL) {
+        val topRoom = if (getRoomType(mapPosFromGridPos(position, ModPair(DOOR_SIZE, 0))) == RoomType.NORMAL) {
             getRoom(ModPair(position.first, position.second - 1))
         } else null
 
         /**
          * Checking to see if the room to the right connects both left and up for that one case of L shaped rooms
          */
-        val topRightRoom = if (getRoomType(mapPosFromGridPos(ModPair(position.first + 1, position.second), ModPair(DOOR_SIZE, DOOR_SIZE - 1))) == RoomType.NORMAL &&
-            getRoomType(mapPosFromGridPos(ModPair(position.first + 1, position.second + 1), ModPair(DOOR_SIZE - 1, DOOR_SIZE))) == RoomType.NORMAL) {
+        val topRightRoom = if (getRoomType(mapPosFromGridPos(ModPair(position.first + 1, position.second), ModPair(DOOR_SIZE, 0))) == RoomType.NORMAL &&
+            getRoomType(mapPosFromGridPos(ModPair(position.first + 1, position.second), ModPair(0, DOOR_SIZE))) == RoomType.NORMAL) {
             getRoom(ModPair(position.first + 1, position.second - 1))
         } else null
 
@@ -289,6 +318,68 @@ object MapUtils {
         }
     }
 
+    @SubscribeEvent
+    fun onTablistUpdate(event: TablistUpdateEvent) {
+        if (!DungeonUtils.inDungeonRun()) return
+
+        var puzzleCount = -1
+        val puzzleNames = mutableListOf<String>()
+        val identifiedPuzzles = mutableListOf<String>()
+
+        val puzzleIndex = event.tablist.indexOfFirst  { line ->
+            puzzleCountPattern.matchMatcher(line.unformat()) { puzzleCount = group("puzzles").toInt() } != null
+        }
+        if (puzzleIndex == -1 || puzzleCount < 1) return
+
+        val sublist = event.tablist.subList(puzzleIndex + 1, puzzleIndex + puzzleCount + 1)
+        for (line in sublist) {
+            val matcher = puzzleInfoPattern.matcher(line.unformat())
+            if (!matcher.find()) continue
+
+            val puzzleName = matcher.group("name")
+            val puzzleStatus = matcher.group("status")
+
+            if (puzzleName == "???") continue
+            puzzleNames.add(puzzleName)
+
+            if (puzzleStatus != "✖") continue
+            for (room in DungeonMap.uniqueRooms) {
+                if (room.roomData()?.name?.lowercase() == puzzleName.lowercase()) {
+                    room.roomState = RoomState.FAILED
+                }
+            }
+        }
+
+        puzzleCount = 0
+        for (room in DungeonMap.uniqueRooms) {
+            if (room.type == RoomType.PUZZLE && room.roomState != RoomState.ADJACENT) {
+                if (room.roomId != null) {
+                    identifiedPuzzles.add(room.roomData()?.name ?: "???")
+                }
+                puzzleCount++
+            }
+        }
+
+        if (puzzleNames.size <= identifiedPuzzleCount) return
+        if (puzzleNames.size != puzzleCount) return
+
+        for (y in 0 until mapTileCount.second) {
+            for (x in 0 until mapTileCount.first) {
+                val room = getRoom(ModPair(x, y)) ?: continue
+                if (room.type == RoomType.PUZZLE && room.roomId == null) {
+                    val puzzleName = puzzleNames.removeAt(0)
+                    val roomIds = RoomDataManager.getRoomIdFromName(puzzleName)
+
+                    if (roomIds.isEmpty()) continue
+                    room.roomId = roomIds[0]
+                    DungeonMap.foundRoomIds.addAll(roomIds)
+                }
+            }
+        }
+        identifiedPuzzleCount = puzzleNames.size
+    }
+
+
     fun gridPosFromMapPos(mapPosition: ModPair) : ModPair {
         return ModPair(
             (mapPosition.first - topLeftTilePos.first) / mapTileSize,
@@ -307,5 +398,5 @@ object MapUtils {
         return RoomType.fromColour(savedMap[location])
     }
 
-    private fun getRoom(location: ModPair) = DungeonMap.dungeonRooms[location]
+    fun getRoom(location: ModPair) = DungeonMap.dungeonRooms[location]
 }

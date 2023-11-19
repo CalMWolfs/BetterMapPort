@@ -13,11 +13,13 @@ import com.calmwolfs.bettermap.data.MinecraftData
 import com.calmwolfs.bettermap.data.ScoreboardData
 import com.calmwolfs.bettermap.data.TablistData
 import com.calmwolfs.bettermap.data.connection.BetterMapServer
+import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.data.roomdata.RoomDataFile
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.features.UsingBmCheck
 import com.calmwolfs.bettermap.utils.DungeonUtils
+import com.calmwolfs.bettermap.utils.EntityUtils
 import com.calmwolfs.bettermap.utils.HypixelUtils
 import com.calmwolfs.bettermap.utils.InventoryUtils
 import com.calmwolfs.bettermap.utils.MapUtils
@@ -55,12 +57,14 @@ class BetterMapMod {
 
         //utils
         loadModule(DungeonUtils)
+        loadModule(EntityUtils)
         loadModule(HypixelUtils)
         loadModule(InventoryUtils)
         loadModule(MapUtils)
 
         //data
         loadModule(BetterMapServer)
+        loadModule(MapTeam)
         loadModule(MinecraftData())
         loadModule(PlayerData)
         loadModule(RoomDataManager)

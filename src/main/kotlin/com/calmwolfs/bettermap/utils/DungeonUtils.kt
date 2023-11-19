@@ -1,13 +1,19 @@
 package com.calmwolfs.bettermap.utils
 
+import com.calmwolfs.bettermap.data.mapdata.DungeonMap
 import com.calmwolfs.bettermap.data.roomdata.RoomData
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.DungeonStartEvent
 import com.calmwolfs.bettermap.events.EnterBossFightEvent
+import com.calmwolfs.bettermap.events.EntityDeathEvent
 import com.calmwolfs.bettermap.events.ModChatEvent
+import com.calmwolfs.bettermap.events.RoomChangeEvent
 import com.calmwolfs.bettermap.events.WorldChangeEvent
+import com.calmwolfs.bettermap.utils.StringUtils.findMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.matchMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.unformat
+import net.minecraft.entity.monster.EntityBlaze
+import net.minecraft.entity.monster.EntityZombie
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object DungeonUtils {
@@ -21,12 +27,20 @@ object DungeonUtils {
     private var currentRoomId: String? = null
     var currentRoomData: RoomData? = null
 
+
     //todo in mastermode variable
+
+
+    private var mimicDead = false
+    private var deadBlazes = 0
+
+    private val mimicDeadPattern = "Party > (?:\\\$SKYTILS-DUNGEON-SCORE-MIMIC\\\$|Mimic (?:Killed|Dead|dead)!)".toPattern()
 
     fun inDungeon() = started
     fun inDungeonRun() = started && !boss
     fun inBossRoom() = boss
     fun getDungeonFloor() = dungeonFloor
+    fun mimicDead() = mimicDead
 
     @SubscribeEvent
     fun onScoreboardUpdate(event: ScoreboardUpdateEvent) {
@@ -50,6 +64,7 @@ object DungeonUtils {
         }
         if (foundId != currentRoomId) {
             currentRoomData = RoomDataManager.getRoomData(foundId)
+            RoomChangeEvent(currentRoomId, foundId).postAndCatch()
             currentRoomId = foundId
         }
     }
@@ -57,15 +72,40 @@ object DungeonUtils {
     @SubscribeEvent
     fun onChatMessage(event: ModChatEvent) {
         val floor = getDungeonFloor() ?: return
+        val unformatted = event.message.unformat()
         if (event.message == "§e[NPC] §bMort§f: Here, I found this map when I first entered the dungeon.") {
             started = true
             DungeonStartEvent(floor).postAndCatch()
         }
 
         if (!inBossRoom()) {
-            if (event.message.unformat() in bossEntryMessages) {
+            if (unformatted in bossEntryMessages) {
                 boss = true
                 EnterBossFightEvent(floor).postAndCatch()
+            }
+        }
+
+        mimicDeadPattern.findMatcher(unformatted) {
+            mimicDead = true
+        }
+    }
+
+    @SubscribeEvent
+    fun onEntityDeath(event: EntityDeathEvent) {
+        if (event.entityLiving is EntityBlaze) {
+            deadBlazes++
+            if (deadBlazes >= 10) {
+                //todo send to socket
+                blazeCompleted()
+            }
+        }
+        if (event.entityLiving is EntityZombie && event.entityLiving.isChild) {
+            val mimicEntity = event.entityLiving
+
+            if ((1..4).all { slotNum -> mimicEntity.getEquipmentInSlot(slotNum) == null }) {
+                mimicDead = true
+                //todo send socket
+                // could also send chat message: Party > Mimic Dead!
             }
         }
     }
@@ -76,6 +116,8 @@ object DungeonUtils {
         started = false
         boss = false
         currentRoomId = null
+        mimicDead = false
+        deadBlazes = 0
     }
 
     private val bossEntryMessages = listOf(
@@ -87,4 +129,12 @@ object DungeonUtils {
         "[BOSS] Sadan: So you made it all the way here... Now you wish to defy me? Sadan?!",
         "[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!"
     )
+
+    fun blazeCompleted() {
+        for (room in DungeonMap.uniqueRooms) {
+            if (room.roomData()?.name?.lowercase() == "higher or lower") {
+                // todo set to complete or cleared based on secrets
+            }
+        }
+    }
 }

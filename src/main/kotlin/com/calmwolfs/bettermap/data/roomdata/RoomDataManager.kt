@@ -73,4 +73,13 @@ object RoomDataManager {
         if (roomId == null) return null
         return loadedRooms[roomId]
     }
+
+    fun getRoomIdFromName(name: String?): List<String> {
+        val matchedIds = mutableListOf<String>()
+        if (name == null) return matchedIds
+        for (room in loadedRooms) {
+            if (room.value.name.lowercase() == name.lowercase()) matchedIds.add(room.key)
+        }
+        return matchedIds
+    }
 }
