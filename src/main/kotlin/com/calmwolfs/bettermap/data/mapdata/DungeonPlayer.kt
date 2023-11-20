@@ -13,6 +13,8 @@ data class DungeonPlayer(var playerInfo: NetworkPlayerInfo, var username: String
     var uuid: String? = null
     var position = ModVector(0, 0, 0)
 
+    var yaw = 0.0
+
     var currentRoom: DungeonRoom? = null
 
     var lastLocallyUpdated = SimpleTimeMark.farPast()

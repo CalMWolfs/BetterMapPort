@@ -1,6 +1,7 @@
 package com.calmwolfs.bettermap.utils
 
 import com.calmwolfs.bettermap.data.ModPair
+import com.calmwolfs.bettermap.data.ModVector
 import com.calmwolfs.bettermap.data.asGridPos
 import com.calmwolfs.bettermap.data.mapdata.DungeonData
 import com.calmwolfs.bettermap.data.mapdata.DungeonData.DOOR_SIZE
@@ -8,19 +9,26 @@ import com.calmwolfs.bettermap.data.mapdata.DungeonDoor
 import com.calmwolfs.bettermap.data.mapdata.DungeonMap
 import com.calmwolfs.bettermap.data.mapdata.DungeonRoom
 import com.calmwolfs.bettermap.data.mapdata.MapColourArray
+import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.data.mapdata.RoomState
 import com.calmwolfs.bettermap.data.mapdata.RoomType
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.MapUpdateEvent
+import com.calmwolfs.bettermap.events.ModActionBarEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.events.RoomChangeEvent
 import com.calmwolfs.bettermap.events.TablistUpdateEvent
 import com.calmwolfs.bettermap.events.WorldChangeEvent
 import com.calmwolfs.bettermap.utils.StringUtils.matchMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.unformat
+import com.calmwolfs.bettermap.utils.Vec4bUtils.mapX
+import com.calmwolfs.bettermap.utils.Vec4bUtils.mapY
+import com.calmwolfs.bettermap.utils.Vec4bUtils.yaw
 import net.minecraft.client.Minecraft
 import net.minecraft.item.ItemMap
+import net.minecraft.util.Vec4b
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import kotlin.time.Duration.Companion.milliseconds
 
 object MapUtils {
     private var savedMap = MapColourArray.empty()
@@ -34,7 +42,7 @@ object MapUtils {
 
     private var identifiedPuzzleCount = 0
 
-    var scaleFactor = 0.0
+    private var scaleFactor = 0.0
     private var bloodOpen = false
 
     fun isMapCalibrated() = mapCalibrated
@@ -42,6 +50,7 @@ object MapUtils {
 
     private val puzzleCountPattern = "Puzzles: \\((?<puzzles>\\d)\\)".toPattern()
     private val puzzleInfoPattern = "\\s(?<name>.*): \\[(?<status>.)]".toPattern()
+    private val secretsPattern = "(?<current>\\d+)/(?<max>\\d+) Secrets".toPattern()
 
     val mapTileSize: Int
         get() = tileSize + DOOR_SIZE * 2
@@ -70,6 +79,10 @@ object MapUtils {
             savedMap = colourArray
             MapUpdateEvent().postAndCatch()
         }
+        if (!event.repeatSeconds(1)) return
+        if (!isMapCalibrated()) return
+        val decorations = mapData.mapDecorations ?: return
+        updatePlayersFromMap(decorations)
     }
 
     @SubscribeEvent
@@ -95,6 +108,25 @@ object MapUtils {
         if (mapCalibrated) {
             getDungeonRooms()
         }
+    }
+
+    @SubscribeEvent
+    fun onActionBar(event: ModActionBarEvent) {
+        val playerLocation = LocationUtils.playerLocation()
+        val playerRoom = playerLocation.asGridPos()
+        val currentRoom = getRoom(playerRoom) ?: return
+        if (currentRoom.type == RoomType.UNKNOWN) return
+
+        val matcher = secretsPattern.matcher(event.message.unformat())
+        if (!matcher.find()) return
+        currentRoom.currentSecrets = matcher.group("current").toInt()
+        currentRoom.maxSecrets = matcher.group("max").toInt()
+
+        if (currentRoom.roomState == RoomState.CLEARED && currentRoom.currentSecrets >= currentRoom.maxSecrets) {
+            currentRoom.roomState = RoomState.COMPLETED
+        }
+
+        //todo send socket
     }
 
     @SubscribeEvent
@@ -149,7 +181,7 @@ object MapUtils {
 
     private fun calibrateMap(spawnMapPosition: ModPair) {
         mapCalibrated = if (tileSize == 16 || tileSize == 18) {
-            scaleFactor = tileSize / DungeonData.ROOM_SIZE.toDouble()
+            scaleFactor = mapTileSize / DungeonData.ROOM_SIZE.toDouble()
 
             val (startPosX, tileCountX) = getMapStartPositionAndSize(spawnMapPosition.first)
             val (startPosY, tileCountY) = getMapStartPositionAndSize(spawnMapPosition.second)
@@ -318,6 +350,26 @@ object MapUtils {
         }
     }
 
+    private fun updatePlayersFromMap(decorations: MutableMap<String, Vec4b>) {
+        var i = 0
+        val mapTeam = MapTeam.getMapPlayers()
+
+        for (decoration in decorations) {
+            if (i > mapTeam.size) return
+
+            val playerData = mapTeam[i] ?: continue
+            if (playerData.username.lowercase() in MapTeam.getDeadPlayers()) continue
+
+            if (playerData.lastLocallyUpdated.passedSince() < 1500.milliseconds) continue
+
+            playerData.yaw = decoration.value.yaw()
+
+            playerData.position = mapPosToModVector(ModPair(decoration.value.mapX(), decoration.value.mapY()))
+
+            i++
+        }
+    }
+
     @SubscribeEvent
     fun onTablistUpdate(event: TablistUpdateEvent) {
         if (!DungeonUtils.inDungeonRun()) return
@@ -392,6 +444,19 @@ object MapUtils {
             gridPosition.first * mapTileSize + topLeftTilePos.first + offset.first,
             gridPosition.second * mapTileSize + topLeftTilePos.second + offset.second
         )
+    }
+
+    fun worldPosFromMapPos(mapPosition: ModPair): ModPair {
+        return ModPair(
+            ((mapPosition.first - topLeftTilePos.first) / scaleFactor).toInt() - DungeonData.ROOM_OFFSET,
+            ((mapPosition.second - topLeftTilePos.second) / scaleFactor).toInt() - DungeonData.ROOM_OFFSET
+        )
+    }
+
+    fun mapPosToModVector(mapPosition: ModPair, yValue: Int = 0): ModVector {
+        val worldPos = worldPosFromMapPos(mapPosition)
+
+        return ModVector(worldPos.first, yValue, worldPos.second)
     }
 
     private fun getRoomType(location: ModPair): RoomType {

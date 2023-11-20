@@ -26,6 +26,7 @@ object MapTeam {
     private val playerTabPattern = "^\\[\\d+] (?:\\[\\w+] )?(?<name>\\w+) .*\\((?<class>\\w+)(?: \\w+)*\\)\$".toPattern()
 
     fun getMapPlayers() = mapPlayers
+    fun getDeadPlayers() = deadPlayers
 
     @SubscribeEvent
     fun onTick(event: ModTickEvent) {

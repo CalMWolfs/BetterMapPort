@@ -1,5 +1,6 @@
 package com.calmwolfs.bettermap.data
 
+import com.calmwolfs.bettermap.events.ModActionBarEvent
 import com.calmwolfs.bettermap.events.ModChatEvent
 import com.calmwolfs.bettermap.utils.StringUtils.removeResets
 import net.minecraftforge.client.event.ClientChatReceivedEvent
@@ -9,10 +10,13 @@ object ChatManager {
 
     @SubscribeEvent(receiveCanceled = true)
     fun onChatReceive(event: ClientChatReceivedEvent) {
-        if (event.type.toInt() == 2) return
-
         val original = event.message
         val message = original.formattedText.removeResets()
+
+        if (event.type.toInt() == 2) {
+            ModActionBarEvent(message).postAndCatch()
+            return
+        }
 
         val chatEvent = ModChatEvent(message, original)
         chatEvent.postAndCatch()

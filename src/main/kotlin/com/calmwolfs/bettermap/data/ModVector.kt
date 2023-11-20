@@ -13,7 +13,7 @@ data class ModVector(
         y = intList.getOrNull(1)?.toDouble() ?: -1.0,
         z = intList.getOrNull(2)?.toDouble() ?: -1.0
     )
-    constructor(x: Int, y: Int, z: Int) : this(x.toDouble(), y.toDouble(), x.toDouble())
+    constructor(x: Int, y: Int, z: Int) : this(x.toDouble(), y.toDouble(), z.toDouble())
 }
 
 fun Entity.getModVector(): ModVector = ModVector(posX, posY, posZ)
@@ -21,13 +21,13 @@ fun Entity.getModVector(): ModVector = ModVector(posX, posY, posZ)
 fun ModVector.asGridPos(): ModPair {
     return ModPair(
         (this.x.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE,
-        (this.y.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE
+        (this.z.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE
     )
 }
 
 fun ModVector.asPosInGrid(): ModPair {
     return ModPair(
         (this.x.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE,
-        (this.y.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE
+        (this.z.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE
     )
 }
