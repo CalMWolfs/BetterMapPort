@@ -16,7 +16,7 @@ public class Features extends Config {
 
     @Override
     public String getTitle() {
-        return "BetterMap " + BetterMapMod.getVersion() + " by §6CalMWolfs§r, §6Soopy§r, §6Tenios§r and §6Bloom§r, config by §5Moulberry §rand §5nea89";
+        return "BetterMap " + BetterMapMod.getVersion() + " by §6BetterMap Contributors§r, config by §5Moulberry §rand §5nea89";
     }
 
     @Expose
