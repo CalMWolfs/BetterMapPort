@@ -1,6 +1,8 @@
 package com.calmwolfs.bettermap.utils
 
+import com.calmwolfs.bettermap.data.connection.BetterMapServer
 import com.calmwolfs.bettermap.data.mapdata.DungeonMap
+import com.calmwolfs.bettermap.data.mapdata.RoomState
 import com.calmwolfs.bettermap.data.roomdata.RoomData
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.DungeonStartEvent
@@ -41,6 +43,8 @@ object DungeonUtils {
     fun inBossRoom() = boss
     fun getDungeonFloor() = dungeonFloor
     fun isMimicDead() = mimicDead
+
+    fun mimicDeath() { mimicDead = true }
 
     @SubscribeEvent
     fun onScoreboardUpdate(event: ScoreboardUpdateEvent) {
@@ -95,7 +99,7 @@ object DungeonUtils {
         if (event.entityLiving is EntityBlaze) {
             deadBlazes++
             if (deadBlazes >= 10) {
-                //todo send to socket
+                BetterMapServer.sendDungeonData("blazeDone")
                 blazeCompleted()
             }
         }
@@ -104,8 +108,7 @@ object DungeonUtils {
 
             if ((1..4).all { slotNum -> mimicEntity.getEquipmentInSlot(slotNum) == null }) {
                 mimicDead = true
-                //todo send socket
-                // could also send chat message: Party > Mimic Dead!
+                BetterMapServer.sendDungeonData("mimicKilled")
             }
         }
     }
@@ -133,7 +136,7 @@ object DungeonUtils {
     fun blazeCompleted() {
         for (room in DungeonMap.uniqueRooms) {
             if (room.roomData()?.name?.lowercase() == "higher or lower") {
-                // todo set to complete or cleared based on secrets
+                room.roomState = if (room.currentSecrets == room.maxSecrets) RoomState.COMPLETED else RoomState.CLEARED
             }
         }
     }

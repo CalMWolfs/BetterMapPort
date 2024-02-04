@@ -3,6 +3,7 @@ package com.calmwolfs.bettermap.data.connection
 import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.events.ModTickEvent
+import com.calmwolfs.bettermap.utils.DungeonUtils
 import com.calmwolfs.bettermap.utils.JsonUtils.asBooleanOrFalse
 import com.calmwolfs.bettermap.utils.JsonUtils.getIntOrValue
 import com.calmwolfs.bettermap.utils.JsonUtils.getStringOrValue
@@ -59,6 +60,14 @@ object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
             }
             "roomId" -> {
                 MapUtils.updateRoomId(data)
+                return
+            }
+            "mimicKilled" -> {
+                DungeonUtils.mimicDeath()
+                return
+            }
+            "blazeDone" -> {
+                DungeonUtils.blazeCompleted()
                 return
             }
         }
