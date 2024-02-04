@@ -7,6 +7,7 @@ import com.calmwolfs.bettermap.config.Features
 import com.calmwolfs.bettermap.config.PlayerData
 import com.calmwolfs.bettermap.config.RepoManager
 import com.calmwolfs.bettermap.config.UpdateManager
+import com.calmwolfs.bettermap.data.ActionBarData
 import com.calmwolfs.bettermap.data.ChatManager
 import com.calmwolfs.bettermap.data.MinecraftConsoleFilter
 import com.calmwolfs.bettermap.data.MinecraftData
@@ -63,6 +64,7 @@ class BetterMapMod {
         loadModule(MapUtils)
 
         //data
+        loadModule(ActionBarData)
         loadModule(BetterMapServer)
         loadModule(MapTeam)
         loadModule(MinecraftData())

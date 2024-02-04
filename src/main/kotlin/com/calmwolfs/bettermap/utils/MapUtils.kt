@@ -13,12 +13,13 @@ import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.data.mapdata.RoomState
 import com.calmwolfs.bettermap.data.mapdata.RoomType
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
+import com.calmwolfs.bettermap.events.ActionBarUpdateEvent
 import com.calmwolfs.bettermap.events.MapUpdateEvent
-import com.calmwolfs.bettermap.events.ModActionBarEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.events.RoomChangeEvent
 import com.calmwolfs.bettermap.events.TablistUpdateEvent
 import com.calmwolfs.bettermap.events.WorldChangeEvent
+import com.calmwolfs.bettermap.utils.StringUtils.findMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.matchMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.unformat
 import com.calmwolfs.bettermap.utils.Vec4bUtils.mapX
@@ -111,16 +112,21 @@ object MapUtils {
     }
 
     @SubscribeEvent
-    fun onActionBar(event: ModActionBarEvent) {
+    fun onActionBarUpdate(event: ActionBarUpdateEvent) {
+        if (!DungeonUtils.inDungeonRun()) return
         val playerLocation = LocationUtils.playerLocation()
         val playerRoom = playerLocation.asGridPos()
         val currentRoom = getRoom(playerRoom) ?: return
         if (currentRoom.type == RoomType.UNKNOWN) return
 
-        val matcher = secretsPattern.matcher(event.message.unformat())
-        if (!matcher.find()) return
-        currentRoom.currentSecrets = matcher.group("current").toInt()
-        currentRoom.maxSecrets = matcher.group("max").toInt()
+        secretsPattern.findMatcher(event.actionBar.unformat()) {
+            currentRoom.currentSecrets = group("current").toInt()
+            currentRoom.maxSecrets = group("max").toInt()
+            println("secrets: ${currentRoom.currentSecrets}, max secrets: ${currentRoom.maxSecrets}")
+        } ?: run {
+            println("no secrets")
+            return
+        }
 
         if (currentRoom.roomState == RoomState.CLEARED && currentRoom.currentSecrets >= currentRoom.maxSecrets) {
             currentRoom.roomState = RoomState.COMPLETED
@@ -384,20 +390,19 @@ object MapUtils {
         if (puzzleIndex == -1 || puzzleCount < 1) return
 
         val sublist = event.tablist.subList(puzzleIndex + 1, puzzleIndex + puzzleCount + 1)
-        for (line in sublist) {
-            val matcher = puzzleInfoPattern.matcher(line.unformat())
-            if (!matcher.find()) continue
+        loop@ for (line in sublist) {
+            puzzleInfoPattern.findMatcher(line.unformat()) {
+                val puzzleName = group("name")
+                val puzzleStatus = group("status")
 
-            val puzzleName = matcher.group("name")
-            val puzzleStatus = matcher.group("status")
+                if (puzzleName == "???") continue@loop
+                puzzleNames.add(puzzleName)
 
-            if (puzzleName == "???") continue
-            puzzleNames.add(puzzleName)
-
-            if (puzzleStatus != "✖") continue
-            for (room in DungeonMap.uniqueRooms) {
-                if (room.roomData()?.name?.lowercase() == puzzleName.lowercase()) {
-                    room.roomState = RoomState.FAILED
+                if (puzzleStatus != "✖") continue@loop
+                for (room in DungeonMap.uniqueRooms) {
+                    if (room.roomData()?.name?.lowercase() == puzzleName.lowercase()) {
+                        room.roomState = RoomState.FAILED
+                    }
                 }
             }
         }
