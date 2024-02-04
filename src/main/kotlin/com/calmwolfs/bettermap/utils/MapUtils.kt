@@ -20,12 +20,16 @@ import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.events.RoomChangeEvent
 import com.calmwolfs.bettermap.events.TablistUpdateEvent
 import com.calmwolfs.bettermap.events.WorldChangeEvent
+import com.calmwolfs.bettermap.utils.JsonUtils.getIntOrValue
+import com.calmwolfs.bettermap.utils.JsonUtils.getStringOrNull
+import com.calmwolfs.bettermap.utils.JsonUtils.getStringOrValue
 import com.calmwolfs.bettermap.utils.StringUtils.findMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.matchMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.unformat
 import com.calmwolfs.bettermap.utils.Vec4bUtils.mapX
 import com.calmwolfs.bettermap.utils.Vec4bUtils.mapY
 import com.calmwolfs.bettermap.utils.Vec4bUtils.yaw
+import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.item.ItemMap
 import net.minecraft.util.Vec4b
@@ -89,9 +93,7 @@ object MapUtils {
 
     @SubscribeEvent
     fun onRoomChange(event: RoomChangeEvent) {
-        val newId = event.newRoomId ?: return
-        if (DungeonMap.foundRoomIds.contains(newId)) return
-
+        if (DungeonMap.foundRoomIds.contains(event.newRoomId)) return
         val gridPosition = LocationUtils.playerLocation().asGridPos()
 
         val currentRoom = getRoom(gridPosition) ?: return
@@ -99,15 +101,26 @@ object MapUtils {
 
         if (currentRoom.roomId != null || currentRoom.type == RoomType.UNKNOWN) return
 
-        currentRoom.roomId = newId
-        DungeonMap.foundRoomIds.add(newId)
+        currentRoom.roomId = event.newRoomId
+        DungeonMap.foundRoomIds.add(event.newRoomId)
 
         BetterMapServer.sendDungeonData(
             "roomId",
             "x" to gridPosition.first,
             "y" to gridPosition.second,
-            "roomId" to newId
+            "roomId" to event.newRoomId
         )
+    }
+
+    fun updateRoomId(data: JsonObject) {
+        val currentRoom = getRoom(ModPair(data.getIntOrValue("x"), data.getIntOrValue("x"))) ?: return
+        if (currentRoom.type == RoomType.UNKNOWN) return
+        currentRoom.roomId ?: return
+
+        val roomId = data.getStringOrNull("roomId") ?: return
+
+        currentRoom.roomId = roomId
+        ChatUtils.chat("Updated Room Id")
     }
 
     @SubscribeEvent
@@ -125,31 +138,44 @@ object MapUtils {
         if (!DungeonUtils.inDungeonRun()) return
 
         secretsPattern.findMatcher(event.actionBar.unformat()) {
-            updateSecrets(group("current").toInt(), group("max").toInt())
+            val current = group("current").toInt()
+            val max = group("max").toInt()
+
+            val gridPosition = LocationUtils.playerLocation().asGridPos()
+
+            val currentRoom = getRoom(gridPosition) ?: return
+            if (currentRoom.type == RoomType.UNKNOWN) return
+
+            if (currentRoom.currentSecrets == current && currentRoom.maxSecrets == max) return
+            currentRoom.currentSecrets = current
+            currentRoom.maxSecrets = max
+
+            if (currentRoom.roomState == RoomState.CLEARED && currentRoom.currentSecrets >= currentRoom.maxSecrets) {
+                currentRoom.roomState = RoomState.COMPLETED
+            }
+
+            BetterMapServer.sendDungeonData(
+                "roomSecrets",
+                "min" to current,
+                "max" to max,
+                "x" to gridPosition.first,
+                "y" to gridPosition.second
+            )
         }
     }
 
-    private fun updateSecrets(current: Int, max: Int) {
-        val gridPosition = LocationUtils.playerLocation().asGridPos()
-
-        val currentRoom = getRoom(gridPosition) ?: return
+    fun updateSecrets(data: JsonObject) {
+        val currentRoom = getRoom(ModPair(data.getIntOrValue("x"), data.getIntOrValue("x"))) ?: return
         if (currentRoom.type == RoomType.UNKNOWN) return
+
+        val current = data.getIntOrValue("min")
+        val max = data.getIntOrValue("max")
+        if (current == -1 || max == -1) return
 
         if (currentRoom.currentSecrets == current && currentRoom.maxSecrets == max) return
         currentRoom.currentSecrets = current
         currentRoom.maxSecrets = max
-
-        if (currentRoom.roomState == RoomState.CLEARED && currentRoom.currentSecrets >= currentRoom.maxSecrets) {
-            currentRoom.roomState = RoomState.COMPLETED
-        }
-
-        BetterMapServer.sendDungeonData(
-            "roomSecrets",
-            "min" to current,
-            "max" to max,
-            "x" to gridPosition.first,
-            "y" to gridPosition.second
-        )
+        ChatUtils.chat("Updated Secret Data")
     }
 
     @SubscribeEvent

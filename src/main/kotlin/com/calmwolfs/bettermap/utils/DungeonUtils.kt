@@ -40,7 +40,7 @@ object DungeonUtils {
     fun inDungeonRun() = started && !boss
     fun inBossRoom() = boss
     fun getDungeonFloor() = dungeonFloor
-    fun mimicDead() = mimicDead
+    fun isMimicDead() = mimicDead
 
     @SubscribeEvent
     fun onScoreboardUpdate(event: ScoreboardUpdateEvent) {
@@ -64,7 +64,7 @@ object DungeonUtils {
         }
         if (foundId != currentRoomId) {
             currentRoomData = RoomDataManager.getRoomData(foundId)
-            RoomChangeEvent(currentRoomId, foundId).postAndCatch()
+            RoomChangeEvent(currentRoomId, foundId ?: return).postAndCatch()
             currentRoomId = foundId
         }
     }

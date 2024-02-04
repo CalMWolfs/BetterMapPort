@@ -8,5 +8,4 @@ object DungeonMap {
     val dungeonDoors = mutableListOf<DungeonDoor>()
     val witherDoors = mutableListOf<DungeonDoor>()
     val foundRoomIds = mutableListOf<String>()
-
 }

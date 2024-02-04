@@ -12,7 +12,15 @@ object JsonUtils {
         }
     }
 
-    fun JsonObject.getIntOrValue(key: String, alternative: Int): Int {
+    fun JsonObject.getStringOrNull(key: String): String? {
+        return if (has(key) && get(key).isJsonPrimitive) {
+            get(key).asString
+        } else {
+            null
+        }
+    }
+
+    fun JsonObject.getIntOrValue(key: String, alternative: Int = -1): Int {
         return if (has(key) && get(key).isJsonPrimitive) {
             get(key).asInt
         } else {

@@ -6,8 +6,8 @@ import com.google.gson.JsonObject
 data class SoopyPacket(val type: SoopyPacketType, val server: SoopyPacketServer, val data: JsonObject)
 
 fun JsonObject.toSoopyPacket(): SoopyPacket {
-    val type = this.getIntOrValue("type", -1)
-    val server = this.getIntOrValue("server", -1)
+    val type = this.getIntOrValue("type")
+    val server = this.getIntOrValue("server")
     val data = this.getAsJsonObject("data") ?: JsonObject()
 
     val packetType = SoopyPacketType.entries.getOrNull(type) ?: SoopyPacketType.DEBUG

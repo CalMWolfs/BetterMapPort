@@ -6,6 +6,7 @@ import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.utils.JsonUtils.asBooleanOrFalse
 import com.calmwolfs.bettermap.utils.JsonUtils.getIntOrValue
 import com.calmwolfs.bettermap.utils.JsonUtils.getStringOrValue
+import com.calmwolfs.bettermap.utils.MapUtils
 import com.calmwolfs.bettermap.utils.SimpleTimeMark
 import com.google.gson.JsonObject
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -37,19 +38,29 @@ object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
 
     override fun receiveData(data: JsonObject) {
         val type = data.getStringOrValue("type", "unknown")
-        if (type == "queryUsingBMap") {
-            val id = data.getIntOrValue("id", -1)
+        when (type) {
+            "queryUsingBMap" -> {
+                val id = data.getIntOrValue("id")
 
-            val booleanArray = data.getAsJsonArray("data") ?: run {
-                peopleUsingBMapCallback.remove(id)
+                val booleanArray = data.getAsJsonArray("data") ?: run {
+                    peopleUsingBMapCallback.remove(id)
+                    return
+                }
+
+                peopleUsingBMapCallback[id]?.let { callback ->
+                    callback(booleanArray.map { it.asBooleanOrFalse() })
+                    peopleUsingBMapCallback.remove(id)
+                }
                 return
             }
-
-            peopleUsingBMapCallback[id]?.let { callback ->
-                callback(booleanArray.map { it.asBooleanOrFalse() })
-                peopleUsingBMapCallback.remove(id)
+            "roomSecrets" -> {
+                MapUtils.updateSecrets(data)
+                return
             }
-            return
+            "roomId" -> {
+                MapUtils.updateRoomId(data)
+                return
+            }
         }
     }
 
