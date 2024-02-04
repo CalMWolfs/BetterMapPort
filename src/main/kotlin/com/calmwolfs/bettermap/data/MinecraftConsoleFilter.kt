@@ -14,7 +14,10 @@ import org.apache.logging.log4j.message.Message
 class MinecraftConsoleFilter : Filter {
     private val config get() = BetterMapMod.feature.dev
 
-    private val patternBiomeIdBounds = "Biome ID is out of bounds: (\\d+), defaulting to 0 \\(Ocean\\)".toPattern()
+    private val biomeIdBoundsPattern = "Biome ID is out of bounds: (\\d+), defaulting to 0 \\(Ocean\\)".toPattern()
+    private val removeTeamPattern = "net.minecraft.scoreboard.Scoreboard.removeTeam\\(Scoreboard.java:\\d+\\)".toPattern()
+    private val createTeamPattern = "net.minecraft.scoreboard.Scoreboard.createTeam\\(Scoreboard.java:\\d+\\)".toPattern()
+    private val removeObjectivePattern = "net.minecraft.scoreboard.Scoreboard.removeObjective\\(Scoreboard.java:\\d+\\)".toPattern()
 
     companion object {
         fun initLogging() {
@@ -46,7 +49,7 @@ class MinecraftConsoleFilter : Filter {
         if (formattedMessage == "Could not spawn particle effect VILLAGER_HAPPY") {
             return Filter.Result.DENY
         }
-        patternBiomeIdBounds.matchMatcher(formattedMessage) {
+        biomeIdBoundsPattern.matchMatcher(formattedMessage) {
             return Filter.Result.DENY
         }
 
@@ -55,19 +58,9 @@ class MinecraftConsoleFilter : Filter {
             if (cause != null && cause.stackTrace.isNotEmpty()) {
                 val first = cause.stackTrace[0]
                 val firstName = first.toString()
-                if (firstName == "net.minecraft.scoreboard.Scoreboard.removeTeam(Scoreboard.java:229)" ||
-                    firstName == "net.minecraft.scoreboard.Scoreboard.removeTeam(Scoreboard.java:262)"
-                ) {
-                    return Filter.Result.DENY
-                }
-                if (firstName == "net.minecraft.scoreboard.Scoreboard.createTeam(Scoreboard.java:218)") {
-                    return Filter.Result.DENY
-                }
-                if (firstName == "net.minecraft.scoreboard.Scoreboard.removeObjective(Scoreboard.java:179)" ||
-                    firstName == "net.minecraft.scoreboard.Scoreboard.removeObjective(Scoreboard.java:198)"
-                ) {
-                    return Filter.Result.DENY
-                }
+                removeTeamPattern.matchMatcher(firstName) { return Filter.Result.DENY }
+                createTeamPattern.matchMatcher(firstName) { return Filter.Result.DENY }
+                removeObjectivePattern.matchMatcher(firstName) { return Filter.Result.DENY }
             }
             if (thrown.toString().contains(" java.lang.IllegalArgumentException: A team with the name '")) {
                 return Filter.Result.DENY

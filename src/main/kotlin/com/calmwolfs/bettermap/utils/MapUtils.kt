@@ -122,9 +122,7 @@ object MapUtils {
         secretsPattern.findMatcher(event.actionBar.unformat()) {
             currentRoom.currentSecrets = group("current").toInt()
             currentRoom.maxSecrets = group("max").toInt()
-            println("secrets: ${currentRoom.currentSecrets}, max secrets: ${currentRoom.maxSecrets}")
         } ?: run {
-            println("no secrets")
             return
         }
 
