@@ -18,7 +18,7 @@ object UsingBmCheck {
 
     fun command(args: Array<String>) {
         if (args.isEmpty()) {
-            ChatUtils.chat("§e[BetterMap] Missing player name! use /bping <player>")
+            ChatUtils.chat("§e[BetterMap] Missing player name! use /bmping <player>")
         }
         else {
             val usernames = args.toList()

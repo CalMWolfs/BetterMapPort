@@ -3,6 +3,7 @@ package com.calmwolfs.bettermap.utils
 import com.calmwolfs.bettermap.data.ModPair
 import com.calmwolfs.bettermap.data.ModVector
 import com.calmwolfs.bettermap.data.asGridPos
+import com.calmwolfs.bettermap.data.connection.BetterMapServer
 import com.calmwolfs.bettermap.data.mapdata.DungeonData
 import com.calmwolfs.bettermap.data.mapdata.DungeonData.DOOR_SIZE
 import com.calmwolfs.bettermap.data.mapdata.DungeonDoor
@@ -91,14 +92,22 @@ object MapUtils {
         val newId = event.newRoomId ?: return
         if (DungeonMap.foundRoomIds.contains(newId)) return
 
-        val playerLocation = LocationUtils.playerLocation()
-        val currentRoom = getRoom(playerLocation.asGridPos()) ?: return
+        val gridPosition = LocationUtils.playerLocation().asGridPos()
+
+        val currentRoom = getRoom(gridPosition) ?: return
+        if (currentRoom.type == RoomType.UNKNOWN) return
+
         if (currentRoom.roomId != null || currentRoom.type == RoomType.UNKNOWN) return
 
         currentRoom.roomId = newId
         DungeonMap.foundRoomIds.add(newId)
 
-        //todo socket update
+        BetterMapServer.sendDungeonData(
+            "roomId",
+            "x" to gridPosition.first,
+            "y" to gridPosition.second,
+            "roomId" to newId
+        )
     }
 
     @SubscribeEvent
@@ -114,23 +123,33 @@ object MapUtils {
     @SubscribeEvent
     fun onActionBarUpdate(event: ActionBarUpdateEvent) {
         if (!DungeonUtils.inDungeonRun()) return
-        val playerLocation = LocationUtils.playerLocation()
-        val playerRoom = playerLocation.asGridPos()
-        val currentRoom = getRoom(playerRoom) ?: return
-        if (currentRoom.type == RoomType.UNKNOWN) return
 
         secretsPattern.findMatcher(event.actionBar.unformat()) {
-            currentRoom.currentSecrets = group("current").toInt()
-            currentRoom.maxSecrets = group("max").toInt()
-        } ?: run {
-            return
+            updateSecrets(group("current").toInt(), group("max").toInt())
         }
+    }
+
+    private fun updateSecrets(current: Int, max: Int) {
+        val gridPosition = LocationUtils.playerLocation().asGridPos()
+
+        val currentRoom = getRoom(gridPosition) ?: return
+        if (currentRoom.type == RoomType.UNKNOWN) return
+
+        if (currentRoom.currentSecrets == current && currentRoom.maxSecrets == max) return
+        currentRoom.currentSecrets = current
+        currentRoom.maxSecrets = max
 
         if (currentRoom.roomState == RoomState.CLEARED && currentRoom.currentSecrets >= currentRoom.maxSecrets) {
             currentRoom.roomState = RoomState.COMPLETED
         }
 
-        //todo send socket
+        BetterMapServer.sendDungeonData(
+            "roomSecrets",
+            "min" to current,
+            "max" to max,
+            "x" to gridPosition.first,
+            "y" to gridPosition.second
+        )
     }
 
     @SubscribeEvent
@@ -467,4 +486,6 @@ object MapUtils {
     }
 
     fun getRoom(location: ModPair) = DungeonMap.dungeonRooms[location]
+
+    fun getCurrentRoom() = getRoom(LocationUtils.playerLocation().asGridPos())
 }

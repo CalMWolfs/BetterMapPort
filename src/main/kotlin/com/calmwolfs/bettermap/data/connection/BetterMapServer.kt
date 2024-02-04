@@ -1,6 +1,7 @@
 package com.calmwolfs.bettermap.data.connection
 
 import com.calmwolfs.BetterMapMod
+import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.utils.JsonUtils.asBooleanOrFalse
 import com.calmwolfs.bettermap.utils.JsonUtils.getIntOrValue
@@ -64,5 +65,31 @@ object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
         sendData(data)
 
         peopleUsingBMapCallback[uniqueId] = callback
+    }
+
+    fun sendDungeonData(type: String, vararg dataValues: Pair<String, Any>){
+        val data = JsonObject()
+        data.addProperty("type", type)
+        for ((key, value) in dataValues) {
+            when (value) {
+                is Int -> data.addProperty(key, value)
+                is String -> data.addProperty(key, value)
+                is List<*> -> {
+                    val array = gson.toJsonTree(value).asJsonArray
+                    data.add(key, array)
+                }
+            }
+        }
+
+        val output = JsonObject()
+
+
+        val players = MapTeam.getMapPlayers().map { it.value.username }
+        val array = gson.toJsonTree(players).asJsonArray
+
+        output.add("data", data)
+        output.add("players", array)
+
+        sendData(output)
     }
 }

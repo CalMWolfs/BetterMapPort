@@ -1,6 +1,7 @@
 package com.calmwolfs.bettermap.data.connection
 
 import com.calmwolfs.BetterMapMod
+import com.calmwolfs.bettermap.utils.ChatUtils
 import com.google.gson.JsonObject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,7 +39,7 @@ object SoopyConnection {
                     if (dataToSend.isNotEmpty()) {
                         for (line in dataToSend) {
                             writer?.println(line)
-                            println("sent $line")
+                            ChatUtils.chat("sent (mod): $line")
                         }
                         dataToSend.clear()
                     } else {
@@ -77,7 +78,7 @@ object SoopyConnection {
         writer = output?.let { PrintWriter(it, true) }
 
         BetterMapMod.coroutineScope.launch {
-            val input = socket?.getInputStream()
+            val input = socket?.getInputStream() ?: return@launch
             val reader = BufferedReader(InputStreamReader(input))
             var shouldContinue = true
 
@@ -89,7 +90,7 @@ object SoopyConnection {
                             val asJson = gson.fromJson(data, JsonObject::class.java)
                             val packet = asJson.toSoopyPacket()
                             receiveData(packet)
-                            println("receive: $data")
+                            ChatUtils.chat("received (mod): $data")
                         } catch (e: Exception) {
                             println("json error with: $data")
                         }
@@ -114,8 +115,6 @@ object SoopyConnection {
     }
 
     private suspend fun receiveData(packet: SoopyPacket) {
-        println("received: $packet")
-
         when (packet.type) {
             SoopyPacketType.SUCCESS -> {
 
@@ -160,7 +159,6 @@ object SoopyConnection {
 
     fun sendData(packet: SoopyPacket) {
         if (!connected || socket == null) return
-        println("sending: $packet")
         val data = packet.toJsonObject()
         dataToSend.add(data.toString().replace("\n", ""))
     }

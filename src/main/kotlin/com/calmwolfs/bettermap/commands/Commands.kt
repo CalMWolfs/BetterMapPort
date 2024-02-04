@@ -23,7 +23,7 @@ object Commands {
 
         registerCommand("bmcopyerror") { CopyErrorCommand.command(it) }
 
-        registerCommand("bping") { UsingBmCheck.command(it) }
+        registerCommand("bmping") { UsingBmCheck.command(it) }
         registerCommand("bmdebugpacket") { UsingBmCheck.debugPacket() }
 
         registerCommand("bmrefreshdata") { RoomDataManager.loadData() }
