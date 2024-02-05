@@ -27,7 +27,7 @@ object DungeonUtils {
     private var boss = false
 
     private var currentRoomId: String? = null
-    var currentRoomData: RoomData? = null
+    private var currentRoomData: RoomData? = null
 
 
     //todo in mastermode variable
@@ -42,8 +42,8 @@ object DungeonUtils {
     fun inDungeonRun() = started && !boss
     fun inBossRoom() = boss
     fun getDungeonFloor() = dungeonFloor
+    fun getCurrentRoomData() = currentRoomData
     fun isMimicDead() = mimicDead
-
     fun mimicDeath() { mimicDead = true }
 
     @SubscribeEvent
@@ -67,6 +67,7 @@ object DungeonUtils {
             }
         }
         if (foundId != currentRoomId) {
+            if (!MapUtils.canUpdateRoom()) return
             currentRoomData = RoomDataManager.getRoomData(foundId)
             RoomChangeEvent(currentRoomId, foundId ?: return).postAndCatch()
             currentRoomId = foundId

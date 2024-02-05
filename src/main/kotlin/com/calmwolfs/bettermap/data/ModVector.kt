@@ -2,6 +2,7 @@ package com.calmwolfs.bettermap.data
 
 import com.calmwolfs.bettermap.data.mapdata.DungeonData
 import net.minecraft.entity.Entity
+import kotlin.math.floor
 
 data class ModVector(
     val x: Double,
@@ -29,5 +30,12 @@ fun ModVector.asPosInGrid(): ModPair {
     return ModPair(
         (this.x.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE,
         (this.z.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE
+    )
+}
+
+fun ModVector.toRoomTopCorner(): ModPair {
+    return ModPair(
+        floor((this.x + 8) / 32).toInt() * 32 - 8,
+        floor((this.z + 8) / 32).toInt() * 32 - 8
     )
 }

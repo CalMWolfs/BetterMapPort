@@ -22,7 +22,6 @@ import com.calmwolfs.bettermap.events.TablistUpdateEvent
 import com.calmwolfs.bettermap.events.WorldChangeEvent
 import com.calmwolfs.bettermap.utils.JsonUtils.getIntOrValue
 import com.calmwolfs.bettermap.utils.JsonUtils.getStringOrNull
-import com.calmwolfs.bettermap.utils.JsonUtils.getStringOrValue
 import com.calmwolfs.bettermap.utils.StringUtils.findMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.matchMatcher
 import com.calmwolfs.bettermap.utils.StringUtils.unformat
@@ -35,6 +34,7 @@ import net.minecraft.item.ItemMap
 import net.minecraft.util.Vec4b
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 object MapUtils {
     private var savedMap = MapColourArray.empty()
@@ -50,6 +50,9 @@ object MapUtils {
 
     private var scaleFactor = 0.0
     private var bloodOpen = false
+
+    private var lastChange = SimpleTimeMark.farPast()
+    private var currentRoomLocation = ModPair(-1, -1)
 
     fun isMapCalibrated() = mapCalibrated
     fun bloodOpened() = bloodOpen
@@ -120,7 +123,6 @@ object MapUtils {
         val roomId = data.getStringOrNull("roomId") ?: return
 
         currentRoom.roomId = roomId
-        ChatUtils.chat("Updated Room Id")
     }
 
     @SubscribeEvent
@@ -138,6 +140,7 @@ object MapUtils {
         if (!DungeonUtils.inDungeonRun()) return
 
         secretsPattern.findMatcher(event.actionBar.unformat()) {
+            if (!canUpdateRoom()) return
             val current = group("current").toInt()
             val max = group("max").toInt()
 
@@ -175,7 +178,16 @@ object MapUtils {
         if (currentRoom.currentSecrets == current && currentRoom.maxSecrets == max) return
         currentRoom.currentSecrets = current
         currentRoom.maxSecrets = max
-        ChatUtils.chat("Updated Secret Data")
+    }
+
+    fun canUpdateRoom(): Boolean {
+        val currentRoom = DungeonMapUtils.getRoomXYWorld()
+        if (currentRoomLocation != currentRoom) {
+            currentRoomLocation = currentRoom
+            lastChange = SimpleTimeMark.now()
+            ChatUtils.chat("(mod) updated room location to $currentRoom")
+        }
+        return lastChange.passedSince() > 1.seconds
     }
 
     @SubscribeEvent

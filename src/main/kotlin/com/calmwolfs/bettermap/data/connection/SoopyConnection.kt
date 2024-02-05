@@ -39,7 +39,7 @@ object SoopyConnection {
                     if (dataToSend.isNotEmpty()) {
                         for (line in dataToSend) {
                             writer?.println(line)
-                            ChatUtils.chat("sent (mod): $line")
+//                            ChatUtils.chat("sent (mod): $line")
                         }
                         dataToSend.clear()
                     } else {
@@ -90,7 +90,7 @@ object SoopyConnection {
                             val asJson = gson.fromJson(data, JsonObject::class.java)
                             val packet = asJson.toSoopyPacket()
                             receiveData(packet)
-                            ChatUtils.chat("received (mod): $data")
+//                            ChatUtils.chat("received (mod): $data")
                         } catch (e: Exception) {
                             println("json error with: $data")
                         }
