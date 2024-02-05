@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.utils
 
-import com.calmwolfs.bettermap.data.ModPair
+import com.calmwolfs.bettermap.data.IntPair
 import com.calmwolfs.bettermap.data.WorldData
 import com.calmwolfs.bettermap.data.mapdata.DungeonData
 import com.calmwolfs.bettermap.data.mapdata.DungeonRoomData
@@ -44,21 +44,21 @@ object DungeonMapUtils {
             width += DungeonData.ROOM_SIZE
         }
 
-        while (!WorldData.isBlockAir(x + width, roofY, z - 1) // in case of L shape
-            && !WorldData.isBlockAir(x + width, roofY, z - 1 + if (height == 30) 0 else 32)) {
+        while (!WorldData.isBlockAir(x + width, roofY, z - 1) && // in case of L shape
+            !WorldData.isBlockAir(x + width, roofY, z - 1 + if (height == 30) 0 else 32)) {
             z -= DungeonData.ROOM_SIZE
             height += DungeonData.ROOM_SIZE
         }
-        while (!WorldData.isBlockAir(x - 1, roofY, z + height) // in case of L shape
-            && !WorldData.isBlockAir(x - 1 + if (width == 30) 0 else 32, roofY, z + height)) {
+        while (!WorldData.isBlockAir(x - 1, roofY, z + height) && // in case of L shape
+            !WorldData.isBlockAir(x - 1 + if (width == 30) 0 else 32, roofY, z + height)) {
             x -= DungeonData.ROOM_SIZE
             width += DungeonData.ROOM_SIZE
         }
 
-        while (width > 30 && height > 30 // in case of L shape
-            && WorldData.isBlockAir(x + DungeonData.ROOM_SIZE - 1, roofY, z + DungeonData.ROOM_SIZE - 1)
-            && !WorldData.isBlockAir(x + DungeonData.ROOM_SIZE - 1, roofY, z + DungeonData.ROOM_SIZE)
-            && !WorldData.isBlockAir(x + DungeonData.ROOM_SIZE, roofY, z + DungeonData.ROOM_SIZE - 1)) {
+        while (width > 30 && height > 30 && // in case of L shape
+            WorldData.isBlockAir(x + DungeonData.ROOM_SIZE - 1, roofY, z + DungeonData.ROOM_SIZE - 1) &&
+            !WorldData.isBlockAir(x + DungeonData.ROOM_SIZE - 1, roofY, z + DungeonData.ROOM_SIZE) &&
+            !WorldData.isBlockAir(x + DungeonData.ROOM_SIZE, roofY, z + DungeonData.ROOM_SIZE - 1)) {
             x += DungeonData.ROOM_SIZE
         }
 
@@ -66,9 +66,9 @@ object DungeonMapUtils {
         return DungeonRoomData(x, z, height, width, rotation)
     }
 
-    fun getRoomXYWorld(): ModPair {
+    fun getRoomXYWorld(): IntPair {
         val roomData = getRoomWorldData()
-        return ModPair(roomData.x, roomData.y)
+        return IntPair(roomData.x, roomData.y)
     }
 
     private fun getRotation(x: Int, z: Int, width: Int, height: Int, roofY: Int): RoomRotation {

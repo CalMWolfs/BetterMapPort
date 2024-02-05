@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.data.mapdata
 
-import com.calmwolfs.bettermap.data.ModPair
+import com.calmwolfs.bettermap.data.IntPair
 
 data class MapColourArray(private val colours: Array<Array<Int>>) {
     override fun toString(): String {
@@ -22,8 +22,8 @@ data class MapColourArray(private val colours: Array<Array<Int>>) {
         return colours[x][y]
     }
 
-    operator fun get(pair: ModPair): Int {
-        return colours[pair.first][pair.second]
+    operator fun get(pair: IntPair): Int {
+        return colours[pair.x][pair.y]
     }
 
     fun getColours(): List<List<Int>> {

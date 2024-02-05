@@ -1,6 +1,6 @@
 package com.calmwolfs.bettermap.utils
 
-import com.calmwolfs.bettermap.data.ModPair
+import com.calmwolfs.bettermap.data.IntPair
 import com.calmwolfs.bettermap.data.ModVector
 import com.calmwolfs.bettermap.data.asGridPos
 import com.calmwolfs.bettermap.data.connection.BetterMapServer
@@ -39,9 +39,9 @@ import kotlin.time.Duration.Companion.seconds
 object MapUtils {
     private var savedMap = MapColourArray.empty()
 
-    var spawnTilePosition: ModPair = ModPair(-1, -1)
-    var topLeftTilePos: ModPair = ModPair(-1, -1)
-    var mapTileCount: ModPair = ModPair(-1, -1)
+    var spawnTilePosition: IntPair = IntPair(-1, -1)
+    var topLeftTilePos: IntPair = IntPair(-1, -1)
+    var mapTileCount: IntPair = IntPair(-1, -1)
 
     private var tileSize = 0
     private var mapCalibrated = false
@@ -52,7 +52,7 @@ object MapUtils {
     private var bloodOpen = false
 
     private var lastChange = SimpleTimeMark.farPast()
-    private var currentRoomLocation = ModPair(-1, -1)
+    private var currentRoomLocation = IntPair(-1, -1)
 
     fun isMapCalibrated() = mapCalibrated
     fun bloodOpened() = bloodOpen
@@ -109,14 +109,14 @@ object MapUtils {
 
         BetterMapServer.sendDungeonData(
             "roomId",
-            "x" to gridPosition.first,
-            "y" to gridPosition.second,
+            "x" to gridPosition.x,
+            "y" to gridPosition.y,
             "roomId" to event.newRoomId
         )
     }
 
     fun updateRoomId(data: JsonObject) {
-        val currentRoom = getRoom(ModPair(data.getIntOrValue("x"), data.getIntOrValue("x"))) ?: return
+        val currentRoom = getRoom(IntPair(data.getIntOrValue("x"), data.getIntOrValue("x"))) ?: return
         if (currentRoom.type == RoomType.UNKNOWN) return
         currentRoom.roomId ?: return
 
@@ -161,14 +161,14 @@ object MapUtils {
                 "roomSecrets",
                 "min" to current,
                 "max" to max,
-                "x" to gridPosition.first,
-                "y" to gridPosition.second
+                "x" to gridPosition.x,
+                "y" to gridPosition.y
             )
         }
     }
 
     fun updateSecrets(data: JsonObject) {
-        val currentRoom = getRoom(ModPair(data.getIntOrValue("x"), data.getIntOrValue("x"))) ?: return
+        val currentRoom = getRoom(IntPair(data.getIntOrValue("x"), data.getIntOrValue("x"))) ?: return
         if (currentRoom.type == RoomType.UNKNOWN) return
 
         val current = data.getIntOrValue("min")
@@ -204,9 +204,9 @@ object MapUtils {
         DungeonMap.foundRoomIds.clear()
         savedMap = MapColourArray.empty()
 
-        spawnTilePosition = ModPair(-1, -1)
-        topLeftTilePos = ModPair(-1, -1)
-        mapTileCount = ModPair(-1, -1)
+        spawnTilePosition = IntPair(-1, -1)
+        topLeftTilePos = IntPair(-1, -1)
+        mapTileCount = IntPair(-1, -1)
 
         identifiedPuzzleCount = 0
 
@@ -217,22 +217,22 @@ object MapUtils {
     }
 
     private fun findEntranceCorner() {
-        var spawnMapPosition = ModPair(-1, -1)
+        var spawnMapPosition = IntPair(-1, -1)
         var tileCount = 0
 
         for (x in savedMap.getColours().indices) {
             for (y in savedMap.getColours()[x].indices) {
                 when {
-                    spawnMapPosition != ModPair(-1, -1) && savedMap[x, y] != RoomType.SPAWN.roomColour -> {
+                    spawnMapPosition != IntPair(-1, -1) && savedMap[x, y] != RoomType.SPAWN.roomColour -> {
                         tileSize = tileCount
                         calibrateMap(spawnMapPosition)
                         return
                     }
-                    spawnMapPosition != ModPair(-1, -1) -> {
+                    spawnMapPosition != IntPair(-1, -1) -> {
                         tileCount++
                     }
                     savedMap[x, y] == RoomType.SPAWN.roomColour -> {
-                        spawnMapPosition = ModPair(x, y)
+                        spawnMapPosition = IntPair(x, y)
                         tileCount++
                     }
                 }
@@ -240,15 +240,15 @@ object MapUtils {
         }
     }
 
-    private fun calibrateMap(spawnMapPosition: ModPair) {
+    private fun calibrateMap(spawnMapPosition: IntPair) {
         mapCalibrated = if (tileSize == 16 || tileSize == 18) {
             scaleFactor = mapTileSize / DungeonData.ROOM_SIZE.toDouble()
 
-            val (startPosX, tileCountX) = getMapStartPositionAndSize(spawnMapPosition.first)
-            val (startPosY, tileCountY) = getMapStartPositionAndSize(spawnMapPosition.second)
+            val (startPosX, tileCountX) = getMapStartPositionAndSize(spawnMapPosition.x)
+            val (startPosY, tileCountY) = getMapStartPositionAndSize(spawnMapPosition.y)
 
-            topLeftTilePos = ModPair(startPosX, startPosY)
-            mapTileCount = ModPair(tileCountX, tileCountY)
+            topLeftTilePos = IntPair(startPosX, startPosY)
+            mapTileCount = IntPair(tileCountX, tileCountY)
 
             spawnTilePosition = gridPosFromMapPos(spawnMapPosition)
             true
@@ -260,35 +260,35 @@ object MapUtils {
     /**
      * Returns a pair with the start pos on the map and the amount of tiles in that column or row
      */
-    private fun getMapStartPositionAndSize(mapCoordinate: Int): ModPair {
+    private fun getMapStartPositionAndSize(mapCoordinate: Int): IntPair {
         return if (tileSize == 16) {
-            if (mapCoordinate % 2 == 0) ModPair(14, 5) else ModPair(3, 6)
+            if (mapCoordinate % 2 == 0) IntPair(14, 5) else IntPair(3, 6)
         } else {
-            if (mapCoordinate % 2 == 0) ModPair(20, 4) else ModPair(9, 5)
+            if (mapCoordinate % 2 == 0) IntPair(20, 4) else IntPair(9, 5)
         }
     }
 
     private fun getDungeonRooms() {
-        for (y in 0 until mapTileCount.second) {
-            for (x in 0 until mapTileCount.first) {
-                val location = mapPosFromGridPos(ModPair(x, y), ModPair(DOOR_SIZE, DOOR_SIZE))
+        for (y in 0 until mapTileCount.y) {
+            for (x in 0 until mapTileCount.x) {
+                val location = mapPosFromGridPos(IntPair(x, y), IntPair(DOOR_SIZE, DOOR_SIZE))
 
                 when (val roomType = getRoomType(location)) {
                     RoomType.UNKNOWN -> continue
                     RoomType.NORMAL -> {
-                        processNormalRoom(ModPair(x, y))
+                        processNormalRoom(IntPair(x, y))
                     }
                     else -> {
-                        processSpecialRoom(roomType, ModPair(x, y))
+                        processSpecialRoom(roomType, IntPair(x, y))
                     }
                 }
-                checkRoomStatus(ModPair(x, y))
-                checkRoomDoors(ModPair(x, y))
+                checkRoomStatus(IntPair(x, y))
+                checkRoomDoors(IntPair(x, y))
             }
         }
     }
 
-    private fun processSpecialRoom(roomType: RoomType, position: ModPair) {
+    private fun processSpecialRoom(roomType: RoomType, position: IntPair) {
         if (roomType == RoomType.BLOOD) bloodOpen = true
 
         val currentRoom = getRoom(position)
@@ -305,22 +305,22 @@ object MapUtils {
         }
     }
 
-    private fun processNormalRoom(position: ModPair) {
+    private fun processNormalRoom(position: IntPair) {
         val currentRoom = getRoom(position)
 
-        val leftRoom = if (getRoomType(mapPosFromGridPos(position, ModPair(0, DOOR_SIZE))) == RoomType.NORMAL) {
-            getRoom(ModPair(position.first - 1, position.second))
+        val leftRoom = if (getRoomType(mapPosFromGridPos(position, IntPair(0, DOOR_SIZE))) == RoomType.NORMAL) {
+            getRoom(IntPair(position.x - 1, position.y))
         } else null
-        val topRoom = if (getRoomType(mapPosFromGridPos(position, ModPair(DOOR_SIZE, 0))) == RoomType.NORMAL) {
-            getRoom(ModPair(position.first, position.second - 1))
+        val topRoom = if (getRoomType(mapPosFromGridPos(position, IntPair(DOOR_SIZE, 0))) == RoomType.NORMAL) {
+            getRoom(IntPair(position.x, position.y - 1))
         } else null
 
         /**
          * Checking to see if the room to the right connects both left and up for that one case of L shaped rooms
          */
-        val topRightRoom = if (getRoomType(mapPosFromGridPos(ModPair(position.first + 1, position.second), ModPair(DOOR_SIZE, 0))) == RoomType.NORMAL &&
-            getRoomType(mapPosFromGridPos(ModPair(position.first + 1, position.second), ModPair(0, DOOR_SIZE))) == RoomType.NORMAL) {
-            getRoom(ModPair(position.first + 1, position.second - 1))
+        val topRightRoom = if (getRoomType(mapPosFromGridPos(IntPair(position.x + 1, position.y), IntPair(DOOR_SIZE, 0))) == RoomType.NORMAL &&
+            getRoomType(mapPosFromGridPos(IntPair(position.x + 1, position.y), IntPair(0, DOOR_SIZE))) == RoomType.NORMAL) {
+            getRoom(IntPair(position.x + 1, position.y - 1))
         } else null
 
         // new room needs adding
@@ -356,8 +356,8 @@ object MapUtils {
         }
     }
 
-    private fun checkRoomStatus(position: ModPair) {
-        val offset = ModPair(mapTileSize / 2, mapTileSize / 2)
+    private fun checkRoomStatus(position: IntPair) {
+        val offset = IntPair(mapTileSize / 2, mapTileSize / 2)
         val roomCenterColour = savedMap[mapPosFromGridPos(position, offset)]
         val checkmarkRoom = getRoom(position)
 
@@ -375,25 +375,25 @@ object MapUtils {
         }
     }
 
-    private fun checkRoomDoors(position: ModPair) {
+    private fun checkRoomDoors(position: IntPair) {
         // top door
-        if (getRoomType(mapPosFromGridPos(position, ModPair(DOOR_SIZE, 0))) == RoomType.UNKNOWN &&
-            getRoomType(mapPosFromGridPos(position, ModPair(mapTileSize / 2, 0))) != RoomType.UNKNOWN) {
+        if (getRoomType(mapPosFromGridPos(position, IntPair(DOOR_SIZE, 0))) == RoomType.UNKNOWN &&
+            getRoomType(mapPosFromGridPos(position, IntPair(mapTileSize / 2, 0))) != RoomType.UNKNOWN) {
 
-            val doorType = getRoomType(mapPosFromGridPos(position, ModPair(mapTileSize / 2, 0)))
+            val doorType = getRoomType(mapPosFromGridPos(position, IntPair(mapTileSize / 2, 0)))
             checkAndUpdateDoor(position, true, doorType)
         }
 
         // left door
-        if (getRoomType(mapPosFromGridPos(position, ModPair(0, DOOR_SIZE))) == RoomType.UNKNOWN &&
-            getRoomType(mapPosFromGridPos(position, ModPair(0, mapTileSize / 2))) != RoomType.UNKNOWN) {
+        if (getRoomType(mapPosFromGridPos(position, IntPair(0, DOOR_SIZE))) == RoomType.UNKNOWN &&
+            getRoomType(mapPosFromGridPos(position, IntPair(0, mapTileSize / 2))) != RoomType.UNKNOWN) {
 
-            val doorType = getRoomType(mapPosFromGridPos(position, ModPair(0, mapTileSize / 2)))
+            val doorType = getRoomType(mapPosFromGridPos(position, IntPair(0, mapTileSize / 2)))
             checkAndUpdateDoor(position, false, doorType)
         }
     }
 
-    private fun checkAndUpdateDoor(position: ModPair, horizontal: Boolean, doorType: RoomType) {
+    private fun checkAndUpdateDoor(position: IntPair, horizontal: Boolean, doorType: RoomType) {
         val door = DungeonMap.dungeonDoors.firstOrNull { it.position == position && it.horizontal == horizontal }
         if (door == null) {
             val newDoor = DungeonDoor(doorType, position, horizontal)
@@ -425,7 +425,7 @@ object MapUtils {
 
             playerData.yaw = decoration.value.yaw()
 
-            playerData.position = mapPosToModVector(ModPair(decoration.value.mapX(), decoration.value.mapY()))
+            playerData.position = mapPosToModVector(IntPair(decoration.value.mapX(), decoration.value.mapY()))
 
             i++
         }
@@ -475,9 +475,9 @@ object MapUtils {
         if (puzzleNames.size <= identifiedPuzzleCount) return
         if (puzzleNames.size != puzzleCount) return
 
-        for (y in 0 until mapTileCount.second) {
-            for (x in 0 until mapTileCount.first) {
-                val room = getRoom(ModPair(x, y)) ?: continue
+        for (y in 0 until mapTileCount.y) {
+            for (x in 0 until mapTileCount.x) {
+                val room = getRoom(IntPair(x, y)) ?: continue
                 if (room.type == RoomType.PUZZLE && room.roomId == null) {
                     val puzzleName = puzzleNames.removeAt(0)
                     val roomIds = RoomDataManager.getRoomIdFromName(puzzleName)
@@ -492,38 +492,38 @@ object MapUtils {
     }
 
 
-    fun gridPosFromMapPos(mapPosition: ModPair) : ModPair {
-        return ModPair(
-            (mapPosition.first - topLeftTilePos.first) / mapTileSize,
-            (mapPosition.second - topLeftTilePos.second) / mapTileSize
+    fun gridPosFromMapPos(mapPosition: IntPair) : IntPair {
+        return IntPair(
+            (mapPosition.x - topLeftTilePos.x) / mapTileSize,
+            (mapPosition.y - topLeftTilePos.y) / mapTileSize
         )
     }
 
-    fun mapPosFromGridPos(gridPosition: ModPair, offset: ModPair = ModPair(0, 0)) : ModPair {
-        return ModPair(
-            gridPosition.first * mapTileSize + topLeftTilePos.first + offset.first,
-            gridPosition.second * mapTileSize + topLeftTilePos.second + offset.second
+    fun mapPosFromGridPos(gridPosition: IntPair, offset: IntPair = IntPair(0, 0)) : IntPair {
+        return IntPair(
+            gridPosition.x * mapTileSize + topLeftTilePos.x + offset.x,
+            gridPosition.y * mapTileSize + topLeftTilePos.y + offset.y
         )
     }
 
-    fun worldPosFromMapPos(mapPosition: ModPair): ModPair {
-        return ModPair(
-            ((mapPosition.first - topLeftTilePos.first) / scaleFactor).toInt() - DungeonData.ROOM_OFFSET,
-            ((mapPosition.second - topLeftTilePos.second) / scaleFactor).toInt() - DungeonData.ROOM_OFFSET
+    fun worldPosFromMapPos(mapPosition: IntPair): IntPair {
+        return IntPair(
+            ((mapPosition.x - topLeftTilePos.x) / scaleFactor).toInt() - DungeonData.ROOM_OFFSET,
+            ((mapPosition.y - topLeftTilePos.y) / scaleFactor).toInt() - DungeonData.ROOM_OFFSET
         )
     }
 
-    fun mapPosToModVector(mapPosition: ModPair, yValue: Int = 0): ModVector {
+    fun mapPosToModVector(mapPosition: IntPair, yValue: Int = 0): ModVector {
         val worldPos = worldPosFromMapPos(mapPosition)
 
-        return ModVector(worldPos.first, yValue, worldPos.second)
+        return ModVector(worldPos.x, yValue, worldPos.y)
     }
 
-    private fun getRoomType(location: ModPair): RoomType {
+    private fun getRoomType(location: IntPair): RoomType {
         return RoomType.fromColour(savedMap[location])
     }
 
-    fun getRoom(location: ModPair) = DungeonMap.dungeonRooms[location]
+    fun getRoom(location: IntPair) = DungeonMap.dungeonRooms[location]
 
     fun getCurrentRoom() = getRoom(LocationUtils.playerLocation().asGridPos())
 }

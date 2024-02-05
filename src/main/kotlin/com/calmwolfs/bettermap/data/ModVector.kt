@@ -19,22 +19,22 @@ data class ModVector(
 
 fun Entity.getModVector(): ModVector = ModVector(posX, posY, posZ)
 
-fun ModVector.asGridPos(): ModPair {
-    return ModPair(
+fun ModVector.asGridPos(): IntPair {
+    return IntPair(
         (this.x.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE,
         (this.z.toInt() + DungeonData.ROOM_OFFSET) / DungeonData.ROOM_SIZE
     )
 }
 
-fun ModVector.asPosInGrid(): ModPair {
-    return ModPair(
+fun ModVector.asPosInGrid(): IntPair {
+    return IntPair(
         (this.x.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE,
         (this.z.toInt() + DungeonData.ROOM_OFFSET) % DungeonData.ROOM_SIZE
     )
 }
 
-fun ModVector.toRoomTopCorner(): ModPair {
-    return ModPair(
+fun ModVector.toRoomTopCorner(): IntPair {
+    return IntPair(
         floor((this.x + 8) / 32).toInt() * 32 - 8,
         floor((this.z + 8) / 32).toInt() * 32 - 8
     )
