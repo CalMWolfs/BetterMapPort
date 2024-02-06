@@ -39,9 +39,9 @@ import kotlin.time.Duration.Companion.seconds
 object MapUtils {
     private var savedMap = MapColourArray.empty()
 
-    var spawnTilePosition: IntPair = IntPair(-1, -1)
-    var topLeftTilePos: IntPair = IntPair(-1, -1)
-    var mapTileCount: IntPair = IntPair(-1, -1)
+    var spawnTilePosition: IntPair = IntPair()
+    var topLeftTilePos: IntPair = IntPair()
+    var mapTileCount: IntPair = IntPair()
 
     private var tileSize = 0
     private var mapCalibrated = false
@@ -52,7 +52,7 @@ object MapUtils {
     private var bloodOpen = false
 
     private var lastChange = SimpleTimeMark.farPast()
-    private var currentRoomLocation = IntPair(-1, -1)
+    private var currentRoomLocation = IntPair()
 
     fun isMapCalibrated() = mapCalibrated
     fun bloodOpened() = bloodOpen
@@ -204,9 +204,9 @@ object MapUtils {
         DungeonMap.foundRoomIds.clear()
         savedMap = MapColourArray.empty()
 
-        spawnTilePosition = IntPair(-1, -1)
-        topLeftTilePos = IntPair(-1, -1)
-        mapTileCount = IntPair(-1, -1)
+        spawnTilePosition = IntPair()
+        topLeftTilePos = IntPair()
+        mapTileCount = IntPair()
 
         identifiedPuzzleCount = 0
 
@@ -217,18 +217,18 @@ object MapUtils {
     }
 
     private fun findEntranceCorner() {
-        var spawnMapPosition = IntPair(-1, -1)
+        var spawnMapPosition = IntPair()
         var tileCount = 0
 
         for (x in savedMap.getColours().indices) {
             for (y in savedMap.getColours()[x].indices) {
                 when {
-                    spawnMapPosition != IntPair(-1, -1) && savedMap[x, y] != RoomType.SPAWN.roomColour -> {
+                    spawnMapPosition != IntPair() && savedMap[x, y] != RoomType.SPAWN.roomColour -> {
                         tileSize = tileCount
                         calibrateMap(spawnMapPosition)
                         return
                     }
-                    spawnMapPosition != IntPair(-1, -1) -> {
+                    spawnMapPosition != IntPair() -> {
                         tileCount++
                     }
                     savedMap[x, y] == RoomType.SPAWN.roomColour -> {

@@ -12,34 +12,16 @@ import com.google.gson.JsonObject
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object UsingBmCheck {
-    @SubscribeEvent
-    fun onHypixelJoin(event: HypixelJoinEvent) {
-        BetterMapServer.start()
-    }
-
     fun command(args: Array<String>) {
-        if (args.isEmpty()) {
-            val players = MapTeam.getMapPlayers().map { it.value.username }
-            BetterMapServer.isUsingBMap(players) { usingBetterMap ->
-                players.forEachIndexed { index, name ->
-                    if (usingBetterMap[index]) {
-                        ChatUtils.chat("§6[BetterMap] §3$name §7is using bettermap")
-                    } else {
-                        ChatUtils.chat("§6[BetterMap] §3$name §7is not using bettermap (or is offline)")
-                    }
-                }
-            }
-        }
-        else {
-            val usernames = args.toList()
+        var players = args.toList()
+        if (players.isEmpty()) players = MapTeam.getMapPlayers().map { it.value.username }
 
-            BetterMapServer.isUsingBMap(usernames) { usingBetterMap ->
-                usernames.forEachIndexed { index, name ->
-                    if (usingBetterMap[index]) {
-                        ChatUtils.chat("§6[BetterMap] §3$name §7is using bettermap")
-                    } else {
-                        ChatUtils.chat("§6[BetterMap] §3$name §7is not using bettermap (or is offline)")
-                    }
+        BetterMapServer.isUsingBMap(players) { usingBetterMap ->
+            players.forEachIndexed { index, name ->
+                if (usingBetterMap[index]) {
+                    ChatUtils.chat("§6[BetterMap] §3$name §7is using bettermap")
+                } else {
+                    ChatUtils.chat("§6[BetterMap] §3$name §7is not using bettermap (or is offline)")
                 }
             }
         }

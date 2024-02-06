@@ -2,6 +2,7 @@ package com.calmwolfs.bettermap.data.connection
 
 import com.calmwolfs.BetterMapMod
 import com.calmwolfs.bettermap.data.mapdata.MapTeam
+import com.calmwolfs.bettermap.events.HypixelJoinEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
 import com.calmwolfs.bettermap.utils.DungeonUtils
 import com.calmwolfs.bettermap.utils.JsonUtils.asBooleanOrFalse
@@ -22,6 +23,11 @@ object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
     private val peopleUsingBMapCallback = ConcurrentHashMap<Int, (List<Boolean>) -> Unit>()
 
     @SubscribeEvent
+    fun onHypixelJoin(event: HypixelJoinEvent) {
+        start()
+    }
+
+    @SubscribeEvent
     fun onTick(event: ModTickEvent) {
         if (!event.repeatSeconds(5)) return
         if (lastDataSend.passedSince() > 5.seconds) {
@@ -29,7 +35,7 @@ object BetterMapServer : SoopyCommunicator(SoopyPacketServer.BETTERMAP) {
         }
     }
 
-    fun start() {
+    private fun start() {
         if (!this.isConnected()) {
             initialise(this)
         } else {

@@ -18,7 +18,6 @@ import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.data.roomdata.RoomDataFile
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
 import com.calmwolfs.bettermap.events.ModTickEvent
-import com.calmwolfs.bettermap.features.UsingBmCheck
 import com.calmwolfs.bettermap.utils.DungeonUtils
 import com.calmwolfs.bettermap.utils.EntityUtils
 import com.calmwolfs.bettermap.utils.HypixelUtils
@@ -74,7 +73,6 @@ class BetterMapMod {
         loadModule(TablistData)
 
         //features
-        loadModule(UsingBmCheck)
 
         Commands.init()
     }
