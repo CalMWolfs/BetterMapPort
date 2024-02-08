@@ -13,6 +13,7 @@ import com.calmwolfs.bettermap.data.MinecraftConsoleFilter
 import com.calmwolfs.bettermap.data.MinecraftData
 import com.calmwolfs.bettermap.data.ScoreboardData
 import com.calmwolfs.bettermap.data.TablistData
+import com.calmwolfs.bettermap.data.WorldData
 import com.calmwolfs.bettermap.data.connection.BetterMapServer
 import com.calmwolfs.bettermap.data.mapdata.MapTeam
 import com.calmwolfs.bettermap.data.roomdata.RoomDataFile
@@ -71,9 +72,11 @@ class BetterMapMod {
         loadModule(RoomDataManager)
         loadModule(ScoreboardData)
         loadModule(TablistData)
+        loadModule(WorldData)
 
         //features
 
+        //commands
         Commands.init()
     }
 

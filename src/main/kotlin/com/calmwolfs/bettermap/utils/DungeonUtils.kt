@@ -42,6 +42,7 @@ object DungeonUtils {
     fun inDungeonRun() = started && !boss
     fun inBossRoom() = boss
     fun getDungeonFloor() = dungeonFloor
+    fun getRoomId() = currentRoomId
     fun getCurrentRoomData() = currentRoomData
     fun isMimicDead() = mimicDead
     fun mimicDeath() { mimicDead = true }

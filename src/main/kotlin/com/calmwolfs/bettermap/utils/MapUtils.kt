@@ -2,6 +2,7 @@ package com.calmwolfs.bettermap.utils
 
 import com.calmwolfs.bettermap.data.IntPair
 import com.calmwolfs.bettermap.data.ModVector
+import com.calmwolfs.bettermap.data.WorldData
 import com.calmwolfs.bettermap.data.asGridPos
 import com.calmwolfs.bettermap.data.connection.BetterMapServer
 import com.calmwolfs.bettermap.data.mapdata.DungeonData
@@ -11,9 +12,13 @@ import com.calmwolfs.bettermap.data.mapdata.DungeonMap
 import com.calmwolfs.bettermap.data.mapdata.DungeonRoom
 import com.calmwolfs.bettermap.data.mapdata.MapColourArray
 import com.calmwolfs.bettermap.data.mapdata.MapTeam
+import com.calmwolfs.bettermap.data.mapdata.RoomRotation
 import com.calmwolfs.bettermap.data.mapdata.RoomState
 import com.calmwolfs.bettermap.data.mapdata.RoomType
 import com.calmwolfs.bettermap.data.roomdata.RoomDataManager
+import com.calmwolfs.bettermap.data.roomdata.RoomDataType
+import com.calmwolfs.bettermap.data.roomdata.RoomShape
+import com.calmwolfs.bettermap.data.toRoomTopCorner
 import com.calmwolfs.bettermap.events.ActionBarUpdateEvent
 import com.calmwolfs.bettermap.events.MapUpdateEvent
 import com.calmwolfs.bettermap.events.ModTickEvent
@@ -32,6 +37,7 @@ import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import net.minecraft.item.ItemMap
 import net.minecraft.util.Vec4b
+import net.minecraft.world.storage.MapData
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -54,6 +60,8 @@ object MapUtils {
     private var lastChange = SimpleTimeMark.farPast()
     private var currentRoomLocation = IntPair()
 
+    private var lastRoomId: String? = null
+
     fun isMapCalibrated() = mapCalibrated
     fun bloodOpened() = bloodOpen
 
@@ -67,11 +75,13 @@ object MapUtils {
     @SubscribeEvent
     fun onTick(event: ModTickEvent) {
         if (!DungeonUtils.inDungeonRun()) return
-        val mapSlot = InventoryUtils.getMapSlot() ?: return
-        val mapSlotItem = mapSlot.item
 
-        if (mapSlotItem !is ItemMap) return
-        val mapData = mapSlotItem.getMapData(mapSlot, Minecraft.getMinecraft().theWorld) ?: return
+        val mapData = getMapData()
+        if (mapData == null) {
+            if (isMapCalibrated()) return
+            updateFromWorld()
+            return
+        }
 
         val pixelData: Array<Array<Int>> = Array(128) { Array(128) { 0 } }
 
@@ -92,6 +102,130 @@ object MapUtils {
         if (!isMapCalibrated()) return
         val decorations = mapData.mapDecorations ?: return
         updatePlayersFromMap(decorations)
+    }
+
+    private fun updateFromWorld() {
+        val roomId = DungeonUtils.getRoomId() ?: return
+        val currentRoomData = DungeonUtils.getCurrentRoomData() ?: return
+
+        //get the room corner location offset by -1, -1
+        val roomCorner = LocationUtils.playerLocation().toRoomTopCorner(IntPair(-1, -1))
+        val gridPosition = LocationUtils.playerLocation().asGridPos()
+
+        val currentRoom = getRoom(gridPosition)
+
+        if (currentRoom?.roomId == null || currentRoom.type == RoomType.UNKNOWN) {
+            if (roomId != lastRoomId && canUpdateRoom()) {
+                lastRoomId = roomId
+
+                val roomWorldData = DungeonMapUtils.getRoomWorldData()
+                var rotation = if (roomWorldData.height > roomWorldData.width) RoomRotation.NORTH else RoomRotation.EAST
+
+                if (currentRoomData.shape == RoomShape.L_SHAPE) rotation = roomWorldData.rotation
+                if (currentRoomData.type == RoomDataType.SPAWN) {
+                    roomWorldData.x += 1
+                    roomWorldData.y += 1
+
+                    WorldData.addAirLocations(roomCorner)
+                }
+
+                setRoom(roomWorldData.x, roomWorldData.y, rotation, roomId, true)
+            }
+            return
+        }
+    }
+
+    private fun setRoom(x: Int, y: Int, rotation: RoomRotation, roomId: String, foundLocally: Boolean) {
+        if (foundLocally) {
+            if (DungeonMap.foundRoomIds.contains(roomId)) {
+                //todo remove
+                return
+            }
+            DungeonMap.foundRoomIds.add(roomId)
+        }
+
+        var roomLocation = IntPair(x, y).asGridPos()
+        val roomData = RoomDataManager.getRoomData(roomId) ?: return
+
+        val components = mutableListOf<IntPair>()
+
+        when (roomData.shape) {
+            RoomShape.ONE_ONE -> components.add(roomLocation)
+            RoomShape.ONE_TWO -> {
+                components.add(roomLocation)
+                if (rotation == RoomRotation.NORTH) {
+                    components.add(roomLocation + IntPair(0, 1))
+                } else {
+                    components.add(roomLocation + IntPair(1, 0))
+                }
+            }
+            RoomShape.ONE_THREE -> {
+                components.add(roomLocation)
+                if (rotation == RoomRotation.NORTH) {
+                    components.add(roomLocation + IntPair(0, 1))
+                    components.add(roomLocation + IntPair(0, 2))
+                } else {
+                    components.add(roomLocation + IntPair(1, 0))
+                    components.add(roomLocation + IntPair(2, 0))
+                }
+            }
+            RoomShape.ONE_FOUR -> {
+                components.add(roomLocation)
+                if (rotation == RoomRotation.NORTH) {
+                    components.add(roomLocation + IntPair(0, 1))
+                    components.add(roomLocation + IntPair(0, 2))
+                    components.add(roomLocation + IntPair(0, 3))
+                } else {
+                    components.add(roomLocation + IntPair(1, 0))
+                    components.add(roomLocation + IntPair(2, 0))
+                    components.add(roomLocation + IntPair(3, 0))
+                }
+            }
+            RoomShape.TWO_TWO -> {
+                components.add(roomLocation)
+                components.add(roomLocation + IntPair(0, 1))
+                components.add(roomLocation + IntPair(1, 1))
+                components.add(roomLocation + IntPair(1, 0))
+            }
+            RoomShape.L_SHAPE -> {
+                // todo all these are wrong i think
+                if (rotation != RoomRotation.SOUTH) components.add(roomLocation)
+                if (rotation != RoomRotation.EAST) components.add(roomLocation + IntPair(0, 1))
+                if (rotation != RoomRotation.WEST) components.add(roomLocation + IntPair(1, 0))
+                if (rotation != RoomRotation.NORTH) components.add(roomLocation + IntPair(1, 1))
+
+                if (rotation == RoomRotation.SOUTH) roomLocation += IntPair(0, 1)
+            }
+            else -> {}
+        }
+
+        var room = getRoom(roomLocation)
+        if (room != null) {
+            room.type = roomData.type.roomType
+            room.components.addAll(components)
+            room.rotation = rotation
+            room.roomId = roomId
+        } else {
+            room = DungeonRoom(roomData.type.roomType, components, roomId)
+        }
+
+        room.roomState = RoomState.ADJACENT
+
+        room.components.forEach {location ->
+            DungeonMap.uniqueRooms.remove(DungeonMap.dungeonRooms[location])
+            DungeonMap.dungeonRooms[location] = room
+        }
+        DungeonMap.uniqueRooms.add(room)
+
+        ChatUtils.chat("Mod Stuff")
+        ChatUtils.chat("Room updated locally or something")
+        ChatUtils.chat("Room was at $roomLocation")
+        ChatUtils.chat("Rotation equals $rotation which is number ${rotation.number}")
+        ChatUtils.chat("Room id is $roomId")
+
+        if (foundLocally) {
+            //todo send to socket
+        }
     }
 
     @SubscribeEvent
@@ -214,6 +348,7 @@ object MapUtils {
         bloodOpen = false
 
         scaleFactor = 0.0
+        lastRoomId = null
     }
 
     private fun findEntranceCorner() {
@@ -431,6 +566,17 @@ object MapUtils {
         }
     }
 
+    private fun getMapData(): MapData? {
+        //todo remove
+        return null
+
+//        val mapSlot = InventoryUtils.getMapSlot() ?: return null
+//        val mapSlotItem = mapSlot.item
+//
+//        if (mapSlotItem !is ItemMap) return null
+//        return mapSlotItem.getMapData(mapSlot, Minecraft.getMinecraft().theWorld)
+    }
+
     @SubscribeEvent
     fun onTablistUpdate(event: TablistUpdateEvent) {
         if (!DungeonUtils.inDungeonRun()) return
@@ -500,10 +646,7 @@ object MapUtils {
     }
 
     fun mapPosFromGridPos(gridPosition: IntPair, offset: IntPair = IntPair(0, 0)) : IntPair {
-        return IntPair(
-            gridPosition.x * mapTileSize + topLeftTilePos.x + offset.x,
-            gridPosition.y * mapTileSize + topLeftTilePos.y + offset.y
-        )
+        return IntPair(gridPosition.x * mapTileSize + topLeftTilePos.x, gridPosition.y * mapTileSize + topLeftTilePos.y) + offset
     }
 
     fun worldPosFromMapPos(mapPosition: IntPair): IntPair {

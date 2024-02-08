@@ -1,8 +1,8 @@
 package com.calmwolfs.bettermap.data.mapdata
 
 data class DungeonRoomData(
-    val x: Int,
-    val y: Int,
+    var x: Int,
+    var y: Int,
     val height: Int,
     val width: Int,
     val rotation: RoomRotation

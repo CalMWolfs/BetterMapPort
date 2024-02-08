@@ -33,9 +33,6 @@ fun ModVector.asPosInGrid(): IntPair {
     )
 }
 
-fun ModVector.toRoomTopCorner(): IntPair {
-    return IntPair(
-        floor((this.x + 8) / 32).toInt() * 32 - 8,
-        floor((this.z + 8) / 32).toInt() * 32 - 8
-    )
+fun ModVector.toRoomTopCorner(offset: IntPair = IntPair(0, 0)): IntPair {
+    return IntPair(floor((this.x + 8) / 32).toInt() * 32 - 8, floor((this.z + 8) / 32).toInt() * 32 - 8) + offset
 }

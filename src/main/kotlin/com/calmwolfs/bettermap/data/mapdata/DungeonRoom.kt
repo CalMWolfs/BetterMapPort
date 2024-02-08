@@ -7,6 +7,7 @@ data class DungeonRoom(var type: RoomType, val components: MutableList<IntPair>,
     var roomState = RoomState.ADJACENT
     var currentSecrets = 0
     var maxSecrets = 0
+    var rotation = RoomRotation.UNKNOWN
 
     fun roomData() = RoomDataManager.getRoomData(roomId)
 }

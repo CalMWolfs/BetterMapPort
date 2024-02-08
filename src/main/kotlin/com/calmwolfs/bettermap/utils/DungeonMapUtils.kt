@@ -9,7 +9,9 @@ import com.calmwolfs.bettermap.data.roomdata.RoomShape
 import com.calmwolfs.bettermap.data.toRoomTopCorner
 
 object DungeonMapUtils {
-    private fun getRoomWorldData(): DungeonRoomData {
+
+    //todo command to get debug for this to know where issues occur from
+    fun getRoomWorldData(): DungeonRoomData {
         var (x, z) = LocationUtils.playerLocation().toRoomTopCorner()
 
         var width = DungeonData.ROOM_SIZE - DungeonData.DOOR_SIZE

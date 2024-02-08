@@ -1,6 +1,7 @@
 package com.calmwolfs.bettermap.data.roomdata
 
 import com.calmwolfs.bettermap.data.ModVector
+import com.calmwolfs.bettermap.data.mapdata.RoomType
 import com.google.gson.annotations.Expose
 
 data class RoomData(
@@ -75,17 +76,17 @@ enum class RoomShape(val apiName: String) {
     }
 }
 
-enum class RoomDataType(val apiName: String) {
-    SPAWN("spawn"),
-    MOBS("mobs"),
-    MINIBOSS("miniboss"),
-    RARE("rare"),
-    PUZZLE("puzzle"),
-    GOLD("gold"),
-    FAIRY("fairy"),
-    BLOOD("blood"),
-    TRAP("trap"),
-    UNKNOWN("");
+enum class RoomDataType(val apiName: String, val roomType: RoomType) {
+    SPAWN("spawn", RoomType.SPAWN),
+    MOBS("mobs", RoomType.NORMAL),
+    MINIBOSS("miniboss", RoomType.NORMAL),
+    RARE("rare", RoomType.NORMAL),
+    PUZZLE("puzzle", RoomType.PUZZLE),
+    GOLD("gold", RoomType.MINIBOSS),
+    FAIRY("fairy", RoomType.FAIRY),
+    BLOOD("blood", RoomType.BLOOD),
+    TRAP("trap", RoomType.TRAP),
+    UNKNOWN("", RoomType.UNKNOWN);
 
     companion object {
         fun fromApiName(apiName: String): RoomDataType {
